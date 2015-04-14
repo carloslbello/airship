@@ -1,56 +1,76 @@
-import os
+import argparse
 import sys
-import ctypes
+import os
+import importlib
 import re
+import time
+import hashlib
 
-steamapi = ctypes.CDLL('CSteamworks.dylib')
-init = steamapi.InitSafe
-init.restype = ctypes.c_bool
-get_file_count = steamapi.ISteamRemoteStorage_GetFileCount
-get_file_name_and_size = steamapi.ISteamRemoteStorage_GetFileNameAndSize
-get_file_name_and_size.restype = ctypes.c_char_p
-get_file_size = steamapi.ISteamRemoteStorage_GetFileSize
-get_file_timestamp = steamapi.ISteamRemoteStorage_GetFileTimestamp
-file_write = steamapi.ISteamRemoteStorage_FileWrite
-file_read = steamapi.ISteamRemoteStorage_FileRead
+parser = argparse.ArgumentParser(description = 'Helper process for airship.py. Not meant for manual use.')
+parser.add_argument('--folder', required = True)
+parser.add_argument('--regex', required = True)
+parser.add_argument('--steamappid')
+parser.add_argument('--icloudbundleid')
 
-os.environ['SteamAppId'] = sys.argv[1]
+arguments = parser.parse_args(sys.argv[1:])
 
-if init():
-    icloudPath = os.path.expanduser('~/Library/Mobile Documents/' + sys.argv[2] + '/' + sys.argv[3])
+modules = []
 
-    icloudDictionary = {}
-    steamDictionary = {}
+def add_module(modulename):
+    module = importlib.import_module(modulename)
+    module.set_folder(arguments.folder)
 
-    for icloudFile in os.listdir(icloudPath):
-        if re.match(sys.argv[4], icloudFile):
-            icloudDictionary[icloudFile] = int(os.path.getmtime(icloudPath + '/' + icloudFile))
+    if modulename == 'steamcloud':
+        module.steamcloud_set_appid(arguments.steamappid)
+    if modulename == 'icloud':
+        module.icloud_set_bundleid(arguments.icloudbundleid)
 
-    for steamFileIndex in range(get_file_count()):
-        steamFile = get_file_name_and_size(steamFileIndex, None)
-        if steamFile.startswith(sys.argv[3] + '/'):
-            steamFileName = steamFile[len(sys.argv[3]) + 1:]
-            if re.match(sys.argv[4], steamFileName):
-                steamDictionary[steamFileName] = get_file_timestamp(steamFile)
+    if module.will_work():
+        modules.append(module)
 
-    def modTime(file):
-        modTime = get_file_timestamp(sys.argv[3] + '/' + file)
-        os.utime(icloudPath + '/' + file, (modTime, modTime))
+if 'steamappid' in arguments:
+    add_module('steamcloud')
 
-    for file in icloudDictionary:
-        if not file in steamDictionary or icloudDictionary[file] > steamDictionary[file]:
-            fileSize = os.path.getsize(icloudPath + '/' + file)
-            fileBuffer = ctypes.create_string_buffer(fileSize)
-            with open(icloudPath + '/' + file, 'r') as fileObject:
-                fileBuffer.value = fileObject.read()
-            file_write(sys.argv[3] + '/' + file, fileBuffer, fileSize)
-            modTime(file)
+if 'icloudbundleid' in arguments:
+    add_module('icloud')
 
-    for file in steamDictionary:
-        if not file in icloudDictionary or steamDictionary[file] > icloudDictionary[file]:
-            fileSize = get_file_size(file)
-            fileBuffer = ctypes.create_string_buffer(fileSize)
-            file_read(sys.argv[3] + '/' + file, fileBuffer, fileSize)
-            with open(icloudPath + '/' + file, 'w') as fileObject:
-                fileObject.write(fileBuffer.value)
-            modTime(file)
+filetimestamps = {}
+
+if len(modules) > 1:
+    for moduleindex in range(len(modules)):
+        filenames = modules[moduleindex].get_file_names()
+        for filename in filenames:
+            if re.match(arguments.regex, filename):
+                if not filename in filetimestamps:
+                    filetimestamps[filename] = [0] * len(modules)
+                filetimestamps[filename][moduleindex] = modules[moduleindex].get_file_timestamp(filename)
+
+    for filename in filetimestamps:
+        newerfilesmayexist = True
+        highestlowtimestamp = -1
+        while newerfilesmayexist:
+            newerfilesmayexist = False
+            lowesttimestamp = int(time.time())
+            lowesttimestampindex = -1
+            for moduleindex in range(len(modules)):
+                if highestlowtimestamp < filetimestamps[filename][moduleindex] < lowesttimestamp:
+                    lowesttimestamp = filetimestamps[filename][moduleindex]
+                    lowesttimestampindex = moduleindex
+            if lowesttimestampindex != -1:
+                newerfilesmayexist = True
+                highestlowtimestamp = lowesttimestamp
+                originaldata = modules[lowesttimestampindex].read_file(filename)
+                for moduleindex in range(len(modules)):
+                    if moduleindex != lowesttimestampindex and modules[moduleindex].read_file(filename) == originaldata:
+                        filetimestamps[filename][moduleindex] = lowesttimestamp
+                        
+        highesttimestamp = -1
+        highesttimestampindex = -1
+        for moduleindex in range(len(modules)):
+            if filetimestamps[filename][moduleindex] > highesttimestamp:
+                highesttimestamp = filetimestamps[filename][moduleindex]
+                highesttimestampindex = moduleindex
+        highesttimestampdata = modules[highesttimestampindex].read_file(filename)
+        for moduleindex in range(len(modules)):
+            if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
+                modules[moduleindex].file_write(filename, highesttimestampdata)
