@@ -1,7 +1,7 @@
 import os
 import platform
 
-def icloud_set_bundleid(bundleid):
+def set_id(bundleid):
     global icloudbundleid
     icloudbundleid = bundleid
 
@@ -9,11 +9,13 @@ def set_folder(folder):
     global icloudfolder
     icloudfolder = folder
 
-
 def will_work():
-    if platform.mac_ver()[0].startswith('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents')):
+    if platform.system() == 'Darwin' and platform.mac_ver()[0].startswith('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents')):
         global icloudpath
-        icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + '/' + icloudfolder)
+        if 'icloudfolder' in globals():
+            icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + '/' + icloudfolder)
+        else:
+            icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid)
         if not os.path.isdir(icloudpath):
             os.path.mkdirs(icloudpath)
         return True
@@ -24,9 +26,6 @@ def get_file_names():
 
 def get_file_timestamp(filename):
     return int(os.path.getmtime(icloudpath + '/' + filename))
-
-def get_file_size(filename):
-    return os.stat(icloudpath + '/' + filename).st_size
 
 def read_file(filename):
     with open(icloudpath + '/' + filename) as fileobject:

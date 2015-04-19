@@ -7,32 +7,36 @@ import time
 import hashlib
 
 parser = argparse.ArgumentParser(description = 'Helper process for airship.py. Not meant for manual use.')
-parser.add_argument('--folder', required = True)
 parser.add_argument('--regex', required = True)
-parser.add_argument('--steamappid')
-parser.add_argument('--icloudbundleid')
+parser.add_argument('--folder')
 
-arguments = parser.parse_args(sys.argv[1:])
+possiblemodules = ['icloud', 'steamcloud']
+
+for modulename in possiblemodules:
+    parser.add_argument('--' + modulename + 'id')
+    parser.add_argument('--' + modulename + 'folder')
+
+arguments = vars(parser.parse_args(sys.argv[1:]))
 
 modules = []
 
 def add_module(modulename):
-    module = importlib.import_module(modulename)
-    module.set_folder(arguments.folder)
+    try:
+        module = importlib.import_module(modulename)
 
-    if modulename == 'steamcloud':
-        module.steamcloud_set_appid(arguments.steamappid)
-    if modulename == 'icloud':
-        module.icloud_set_bundleid(arguments.icloudbundleid)
+        if arguments[modulename + 'folder'] is not None or arguments['folder'] is not None:
+            module.set_folder(arguments[modulename + 'folder'] if arguments[modulename + 'folder'] is not None else arguments['folder'])
 
-    if module.will_work():
-        modules.append(module)
+        module.set_id(arguments[modulename + 'id'])
 
-if 'steamappid' in arguments:
-    add_module('steamcloud')
+        if module.will_work():
+            modules.append(module)
+    except:
+        pass
 
-if 'icloudbundleid' in arguments:
-    add_module('icloud')
+for modulename in possiblemodules:
+    if arguments[modulename + 'id'] is not None:
+        add_module(modulename)
 
 filetimestamps = {}
 
@@ -40,7 +44,7 @@ if len(modules) > 1:
     for moduleindex in range(len(modules)):
         filenames = modules[moduleindex].get_file_names()
         for filename in filenames:
-            if re.match(arguments.regex, filename):
+            if re.match(arguments['regex'], filename):
                 if not filename in filetimestamps:
                     filetimestamps[filename] = [0] * len(modules)
                 filetimestamps[filename][moduleindex] = modules[moduleindex].get_file_timestamp(filename)
@@ -60,10 +64,12 @@ if len(modules) > 1:
                 newerfilesmayexist = True
                 highestlowtimestamp = lowesttimestamp
                 originaldata = modules[lowesttimestampindex].read_file(filename)
-                for moduleindex in range(len(modules)):
-                    if moduleindex != lowesttimestampindex and modules[moduleindex].read_file(filename) == originaldata:
-                        filetimestamps[filename][moduleindex] = lowesttimestamp
-                        
+                if originaldata is not None:
+                    originalhash = hashlib.sha1(originaldata).hexdigest()
+                    for moduleindex in range(len(modules)):
+                        if moduleindex != lowesttimestampindex and hashlib.sha1(modules[moduleindex].read_file(filename)).hexdigest() == originalhash:
+                            filetimestamps[filename][moduleindex] = lowesttimestamp
+
         highesttimestamp = -1
         highesttimestampindex = -1
         for moduleindex in range(len(modules)):
@@ -71,6 +77,7 @@ if len(modules) > 1:
                 highesttimestamp = filetimestamps[filename][moduleindex]
                 highesttimestampindex = moduleindex
         highesttimestampdata = modules[highesttimestampindex].read_file(filename)
-        for moduleindex in range(len(modules)):
-            if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                modules[moduleindex].file_write(filename, highesttimestampdata)
+        if highesttimestampdata is not None:
+            for moduleindex in range(len(modules)):
+                if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
+                    modules[moduleindex].file_write(filename, highesttimestampdata)

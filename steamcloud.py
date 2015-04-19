@@ -2,7 +2,7 @@ import os
 import platform
 import ctypes
 
-def steamcloud_set_appid(appid):
+def set_id(appid):
     os.environ['SteamAppId'] = appid
 
 def set_folder(folder):
@@ -47,24 +47,36 @@ def get_file_names():
     filenames = []
     for fileindex in range(steamapi_get_file_count()):
         filename = steamapi_get_file_name_size(fileindex, None)
-        if filename.startswith(steamfolder + '/'):
-            filenames.append(filename[len(steamfolder) + 1:])
+        if 'steamfolder' in globals():
+            if filename.startswith(steamfolder + '/'):
+                filenames.append(filename[len(steamfolder) + 1:])
+        else:
+            filenames.append(filename)
     return filenames
 
 def get_file_timestamp(filename):
-    return steamapi_get_file_timestamp(steamfolder + '/' + filename)
-
-def get_file_size(filename):
-    return steamapi_get_file_size(steamfolder + '/' + filename)
+    if 'steamfolder' in globals():
+        return steamapi_get_file_timestamp(steamfolder + '/' + filename)
+    else:
+        return steamapi_get_file_timestamp(filename)
 
 def read_file(filename):
-    size = get_file_size(filename)
+    if 'steamfolder' in globals():
+        size = steamapi_get_file_size(steamfolder + '/' + filename)
+    else:
+        size = steamapi_get_file_size(filename)
     buffer = ctypes.create_string_buffer(size)
-    steamapi_file_read(steamfolder + '/' + filename, buffer, size)
+    if 'steamfolder' in globals():
+        steamapi_file_read(steamfolder + '/' + filename, buffer, size)
+    else:
+        steamapi_file_read(filename, buffer, size)
     return buffer.value
 
 def write_file(filename, data):
     size = len(data)
     buffer = ctypes.create_string_buffer(size)
     buffer.value = data
-    steamapi_file_write(steamfolder + '/' + filename, buffer, size)
+    if 'steamfolder' in globals():
+        steamapi_file_write(steamfolder + '/' + filename, buffer, size)
+    else:
+        steamapi_file_write(filename, buffer, size)
