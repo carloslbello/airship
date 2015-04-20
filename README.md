@@ -15,4 +15,4 @@ Download the latest release by going to 'releases' at the top of the page and go
 To use, simply run the `airship.py` script. Note that you must be logged in to your iCloud and Steam accounts and that Steam must be running.
 
 ## Supported games
-+ [The Banner Saga](http://store.steampowered.com/app/237990/)
++ The Banner Saga ([Steam Cloud](http://store.steampowered.com/app/237990/), [iCloud](https://itunes.apple.com/us/app/banner-saga/id911006986))
