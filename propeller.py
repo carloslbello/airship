@@ -6,8 +6,8 @@ import re
 import time
 import hashlib
 
-parser = argparse.ArgumentParser(description = 'Helper process for airship.py. Not meant for manual use.')
-parser.add_argument('--regex', required = True)
+parser = argparse.ArgumentParser(description='Helper process for airship.py. Not meant for manual use.')
+parser.add_argument('--regex', required=True)
 parser.add_argument('--folder')
 
 possiblemodules = ['icloud', 'steamcloud']
@@ -80,4 +80,4 @@ if len(modules) > 1:
         if highesttimestampdata is not None:
             for moduleindex in range(len(modules)):
                 if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                    modules[moduleindex].file_write(filename, highesttimestampdata)
+                    modules[moduleindex].write_file(filename, highesttimestampdata)

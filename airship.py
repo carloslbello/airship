@@ -1,9 +1,12 @@
 import os
+import sys
 import subprocess
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 games = [{ # The Banner Saga
-    'regex': '(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.save\.json',
-    'folder': 'save/saga1/0',
+    'regex': '[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.save\.json',
+    'folder': 'save/saga1',
     'steamcloudid': '237990',
     'icloudid': 'MQ92743Y4D~com~stoicstudio~BannerSaga'
 }]

@@ -10,7 +10,7 @@ def set_folder(folder):
     icloudfolder = folder
 
 def will_work():
-    if platform.system() == 'Darwin' and platform.mac_ver()[0].startswith('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents')):
+    if platform.mac_ver()[0].startswith('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents')):
         global icloudpath
         if 'icloudfolder' in globals():
             icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + '/' + icloudfolder)
@@ -22,7 +22,17 @@ def will_work():
     return False
 
 def get_file_names():
-    return os.listdir(icloudpath)
+    filenames = []
+    def recursive_dir_contents(dir):
+        dircontents = os.listdir(icloudpath if dir is None else icloudpath + '/' + dir )
+        for item in dircontents:
+            if os.path.isdir(icloudpath + '/' + item if dir is None else icloudpath + '/' + dir + '/' + item):
+                recursive_dir_contents(item if dir is None else dir + '/' + item)
+            else:
+                filenames.append(item if dir is None else dir + '/' + item)
+
+    recursive_dir_contents(None)
+    return filenames
 
 def get_file_timestamp(filename):
     return int(os.path.getmtime(icloudpath + '/' + filename))
