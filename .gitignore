@@ -5,7 +5,9 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
-bin_win/*
+bin_win32/*
+bin_win64/*
 bin_osx/*
-bin_lnx/*
+bin_lnx32/*
+bin_lnx64
 *.pyc

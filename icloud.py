@@ -1,5 +1,21 @@
-import os
 import platform
+import distutils.version
+import os
+
+def init():
+    global icloudbundleid
+    icloudbundleid = None
+    global icloudfolder
+    icloudfolder = None
+    global icloudpath
+    icloudpath = None
+
+    if platform.system() == 'Darwin':
+        version, _, machine = platform.mac_ver()
+        version = distutils.version.StrictVersion(version)
+        return (machine.startswith('iP') and version > distutils.version.StrictVersion('8')) or version > distutils.version.StrictVersion('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
+
+    return False
 
 def set_id(bundleid):
     global icloudbundleid
@@ -10,21 +26,18 @@ def set_folder(folder):
     icloudfolder = folder
 
 def will_work():
-    if platform.mac_ver()[0].startswith('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents')):
-        global icloudpath
-        if 'icloudfolder' in globals():
-            icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + '/' + icloudfolder)
-        else:
-            icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid)
-        if not os.path.isdir(icloudpath):
-            os.path.mkdirs(icloudpath)
-        return True
-    return False
+    global icloudpath
+    icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + ('' if icloudfolder is None else '/' + icloudfolder))
+
+    if not os.path.isdir(icloudpath):
+        os.makedirs(icloudpath)
+
+    return True
 
 def get_file_names():
     filenames = []
     def recursive_dir_contents(dir):
-        dircontents = os.listdir(icloudpath if dir is None else icloudpath + '/' + dir )
+        dircontents = os.listdir(icloudpath if dir is None else icloudpath + '/' + dir)
         for item in dircontents:
             if os.path.isdir(icloudpath + '/' + item if dir is None else icloudpath + '/' + dir + '/' + item):
                 recursive_dir_contents(item if dir is None else dir + '/' + item)
@@ -43,5 +56,17 @@ def read_file(filename):
     return data
 
 def write_file(filename, data):
-    with open(icloudpath + '/' + filename, 'w') as fileobject:
+    path = icloudpath + '/' + filename
+    dir = path[:path.rfind('/')]
+
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+
+    with open(path, 'w') as fileobject:
         fileobject.write(data)
+
+def shutdown():
+    global icloudbundleid
+    icloudbundleid = None
+    global icloudfolder
+    icloudfolder = None
