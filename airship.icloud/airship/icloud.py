@@ -3,17 +3,13 @@ import distutils.version
 import os
 
 def init():
-    global icloudbundleid
-    icloudbundleid = None
     global icloudfolder
     icloudfolder = None
-    global icloudpath
-    icloudpath = None
 
     if platform.system() == 'Darwin':
         version, _, machine = platform.mac_ver()
         version = distutils.version.StrictVersion(version)
-        return (machine.startswith('iP') and version > distutils.version.StrictVersion('8')) or version > distutils.version.StrictVersion('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
+        return version > distutils.version.StrictVersion('10.10') and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
 
     return False
 
@@ -66,7 +62,5 @@ def write_file(filename, data):
         fileobject.write(data)
 
 def shutdown():
-    global icloudbundleid
-    icloudbundleid = None
     global icloudfolder
     icloudfolder = None

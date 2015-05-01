@@ -13,7 +13,7 @@ def init():
         elif system == 'Darwin':
             steamapi = ctypes.CDLL('bin_osx/CSteamworks.dylib')
         else:
-            steamapi = ctypes.CDLL('bin_lnx' + bits + '/CSteamworks.so')
+            steamapi = ctypes.CDLL('bin_lnx' + bits + '/libCSteamworks.so')
 
         global steamapi_init
         steamapi_init = steamapi.InitSafe
