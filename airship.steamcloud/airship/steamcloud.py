@@ -38,7 +38,10 @@ def init():
         global steamfolder
         steamfolder = None
 
-        return True
+        is_steam_running = steamapi.IsSteamRunning
+        is_steam_running.restype = ctypes.c_bool
+
+        return is_steam_running()
 
     except:
         return False
