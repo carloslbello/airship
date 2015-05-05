@@ -46,48 +46,62 @@ def sync():
 
             if len(gamemodules) > 1:
                 filetimestamps = {}
-                for moduleindex in range(len(gamemodules)):
+                cancontinue = True
+                for moduleindex in xrange(len(gamemodules)):
                     filenames = gamemodules[moduleindex].get_file_names()
+                    if not filenames: # I don't believe you. Maybe you don't have local copies of the files?
+                        cancontinue = False
+                        break
                     for filename in filenames:
                         if re.match(game['regex'], filename):
                             if not filename in filetimestamps:
-                                filetimestamps[filename] = [0] * len(gamemodules)
+                                filetimestamps[filename] = [-1] * len(gamemodules)
                             filetimestamps[filename][moduleindex] = gamemodules[moduleindex].get_file_timestamp(filename)
-
-                for filename in filetimestamps:
-                    newerfilesmayexist = True
-                    highestlowtimestamp = -1
-                    filedata = [None] * len(gamemodules)
-                    for moduleindex in range(len(gamemodules)):
-                        filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
-                    while newerfilesmayexist:
-                        newerfilesmayexist = False
-                        lowesttimestamp = int(time.time())
-                        lowesttimestampindex = -1
-                        for moduleindex in range(len(gamemodules)):
-                            if highestlowtimestamp < filetimestamps[filename][moduleindex] < lowesttimestamp and filetimestamps[filename][moduleindex] > 0:
-                                lowesttimestamp = filetimestamps[filename][moduleindex]
-                                lowesttimestampindex = moduleindex
-                        if lowesttimestampindex != -1:
+                if cancontinue:
+                    for filename in filetimestamps:
+                        for timestamp in filetimestamps[filename]:
+                            if timestamp == 0:
+                                cancontinue = False
+                                break
+                        if cancontinue:
                             newerfilesmayexist = True
-                            highestlowtimestamp = lowesttimestamp
-                            originaldata = filedata[lowesttimestampindex]
-                            if originaldata is not None:
-                                for moduleindex in range(len(gamemodules)):
-                                    if moduleindex != lowesttimestampindex and filetimestamps[filename][moduleindex] > 0 and filedata[moduleindex] == originaldata:
-                                        filetimestamps[filename][moduleindex] = lowesttimestamp
+                            highestlowtimestamp = -1
+                            filedata = [None] * len(gamemodules)
+                            for moduleindex in range(len(gamemodules)):
+                                filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
+                            for dataindex in xrange(len(filedata)):
+                                if filedata[dataindex] is None and filetimestamps[filename][dataindex] != -1:
+                                    cancontinue = False
+                                    break
+                            if cancontinue:
+                                while newerfilesmayexist:
+                                    newerfilesmayexist = False
+                                    lowesttimestamp = int(time.time())
+                                    lowesttimestampindex = -1
+                                    for moduleindex in range(len(gamemodules)):
+                                        if highestlowtimestamp < filetimestamps[filename][moduleindex] < lowesttimestamp and filetimestamps[filename][moduleindex] > 0:
+                                            lowesttimestamp = filetimestamps[filename][moduleindex]
+                                            lowesttimestampindex = moduleindex
+                                    if lowesttimestampindex != -1:
+                                        newerfilesmayexist = True
+                                        highestlowtimestamp = lowesttimestamp
+                                        originaldata = filedata[lowesttimestampindex]
+                                        if originaldata is not None:
+                                            for moduleindex in range(len(gamemodules)):
+                                                if moduleindex != lowesttimestampindex and filetimestamps[filename][moduleindex] > 0 and filedata[moduleindex] == originaldata:
+                                                    filetimestamps[filename][moduleindex] = lowesttimestamp
 
-                    highesttimestamp = -1
-                    highesttimestampindex = -1
-                    for moduleindex in range(len(gamemodules)):
-                        if filetimestamps[filename][moduleindex] > highesttimestamp:
-                            highesttimestamp = filetimestamps[filename][moduleindex]
-                            highesttimestampindex = moduleindex
-                    highesttimestampdata = filedata[highesttimestampindex]
-                    if highesttimestampdata is not None:
-                        for moduleindex in range(len(gamemodules)):
-                            if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                                gamemodules[moduleindex].write_file(filename, highesttimestampdata)
+                                highesttimestamp = -1
+                                highesttimestampindex = -1
+                                for moduleindex in range(len(gamemodules)):
+                                    if filetimestamps[filename][moduleindex] > highesttimestamp:
+                                        highesttimestamp = filetimestamps[filename][moduleindex]
+                                        highesttimestampindex = moduleindex
+                                highesttimestampdata = filedata[highesttimestampindex]
+                                if highesttimestampdata is not None:
+                                    for moduleindex in range(len(gamemodules)):
+                                        if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
+                                            gamemodules[moduleindex].write_file(filename, highesttimestampdata)
 
             for module in gamemodules:
                 module.shutdown()

@@ -17,5 +17,7 @@ To use, simply run `airship`.
 
 For instructions on how to run Airship on a schedule, see the wiki page [Automatically running Airship](https://github.com/aarzee/airship/wiki/Automatically-running-Airship).
 
+Airship will not synchronize a game if a cloud service is functioning, but has no files for the game. (This does not include clouds which are not active, or do not support the game). This is to prevent data loss in the event that a cloud service is somehow unavailable or otherwise does not have a local copy of the files. Before using Airship, please create a save file on all clouds you intend to use, and make sure the one that you want synchronized is the one last opened.
+
 ## Supported games
 + The Banner Saga ([Steam Cloud](http://store.steampowered.com/app/237990/), [iCloud](https://itunes.apple.com/us/app/banner-saga/id911006986))

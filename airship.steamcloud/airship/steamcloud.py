@@ -76,7 +76,7 @@ def read_file(filename):
     size = steamapi_get_file_size(('' if steamfolder is None else steamfolder + '/') + filename)
     buffer = ctypes.create_string_buffer(size)
     steamapi_file_read(('' if steamfolder is None else steamfolder + '/') + filename, buffer, size)
-    return buffer.value
+    return None if not buffer.value else buffer.value
 
 def write_file(filename, data):
     size = len(data)
