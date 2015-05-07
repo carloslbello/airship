@@ -68,7 +68,8 @@ def sync():
                             highestlowtimestamp = -1
                             filedata = [None] * len(gamemodules)
                             for moduleindex in range(len(gamemodules)):
-                                filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
+                                if filetimestamps[filename][moduleindex] != -1:
+                                    filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
                             for dataindex in xrange(len(filedata)):
                                 if filedata[dataindex] is None and filetimestamps[filename][dataindex] != -1:
                                     cancontinue = False

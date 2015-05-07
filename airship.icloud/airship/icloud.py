@@ -50,10 +50,10 @@ def read_file(filename):
 
 def write_file(filename, data):
     path = icloudpath + '/' + filename
-    dir = path[:path.rfind('/')]
+    directory = path[:path.rfind('/')]
 
-    if not os.path.isdir(dir):
-        os.makedirs(dir)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
 
     with open(path, 'w') as fileobject:
         fileobject.write(data)
