@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship-steamcloud',
-    version='1.2',
+    version='1.2.1',
 
     description='Steam Cloud plugin for Airship',
 

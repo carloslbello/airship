@@ -34,6 +34,12 @@ def init():
         steamapi_file_read = steamapi.ISteamRemoteStorage_FileRead
         global steamapi_shutdown
         steamapi_shutdown = steamapi.Shutdown
+        global steamapi_cloud_enabled_account
+        steamapi_cloud_enabled_account = steamapi.ISteamRemoteStorage_IsCloudEnabledForAccount
+        steamapi_cloud_enabled_account.restype = ctypes.c_bool
+        global steamapi_cloud_enabled_app
+        steamapi_cloud_enabled_app = steamapi.ISteamRemoteStorage_IsCloudEnabledForApp
+        steamapi_cloud_enabled_app.restype = ctypes.c_bool
 
         global steamfolder
         steamfolder = None
@@ -55,7 +61,7 @@ def set_folder(folder):
     steamfolder = folder
 
 def will_work():
-    return steamapi_init()
+    return steamapi_init() and steamapi_cloud_enabled_account() and steamapi_cloud_enabled_app()
 
 def get_file_names():
     filenames = []

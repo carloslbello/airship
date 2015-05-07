@@ -25,7 +25,7 @@ def will_work():
     global icloudpath
     icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + ('' if icloudfolder is None else '/' + icloudfolder))
 
-    return os.path.isdir(icloudpath):
+    return os.path.isdir(icloudpath)
 
 def get_file_names():
     filenames = []
