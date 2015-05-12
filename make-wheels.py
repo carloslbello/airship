@@ -12,7 +12,7 @@ for item in os.listdir(os.getcwd()):
 
 for package in packages:
     os.chdir(package)
-    subprocess.call(['python', 'setup.py', 'bdist_wheel'])
+    subprocess.call(['python', 'setup.py', 'bdist_wheel', '--universal'])
     os.chdir('..')
     for item in os.listdir(package + '/dist'):
         if item.endswith('.whl'):

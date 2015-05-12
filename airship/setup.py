@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship',
-    version='1.2.2',
+    version='1.3',
 
     description='A tool to synchronize game saves between clouds',
     long_description='Airship allows users to synchronize saved games between cloud platforms. Requires subpackages for each cloud service; for example, install airship-steamcloud and airship-icloud to sync between these two services.',
@@ -24,7 +24,9 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4'
     ],
 
     keywords='cloud games',

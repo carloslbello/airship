@@ -1,7 +1,6 @@
 import os
 import importlib
 import re
-import time
 
 def sync():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -47,7 +46,7 @@ def sync():
             if len(gamemodules) > 1:
                 filetimestamps = {}
                 cancontinue = True
-                for moduleindex in xrange(len(gamemodules)):
+                for moduleindex in range(len(gamemodules)):
                     filenames = gamemodules[moduleindex].get_file_names()
                     if not filenames: # I don't believe you. Maybe you don't have local copies of the files?
                         cancontinue = False
@@ -70,14 +69,14 @@ def sync():
                             for moduleindex in range(len(gamemodules)):
                                 if filetimestamps[filename][moduleindex] != -1:
                                     filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
-                            for dataindex in xrange(len(filedata)):
+                            for dataindex in range(len(filedata)):
                                 if filedata[dataindex] is None and filetimestamps[filename][dataindex] != -1:
                                     cancontinue = False
                                     break
                             if cancontinue:
                                 while newerfilesmayexist:
                                     newerfilesmayexist = False
-                                    lowesttimestamp = int(time.time())
+                                    lowesttimestamp = 2000000000
                                     lowesttimestampindex = -1
                                     for moduleindex in range(len(gamemodules)):
                                         if highestlowtimestamp < filetimestamps[filename][moduleindex] < lowesttimestamp and filetimestamps[filename][moduleindex] > 0:

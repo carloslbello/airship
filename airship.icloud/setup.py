@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship-icloud',
-    version='1.2.2',
+    version='1.3',
 
     description='iCloud plugin for Airship',
 
@@ -23,7 +23,9 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4'
     ],
 
     keywords='cloud games',

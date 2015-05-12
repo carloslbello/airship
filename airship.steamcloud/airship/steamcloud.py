@@ -23,15 +23,22 @@ def init():
         steamapi_get_file_count.restype = ctypes.c_int
         global steamapi_get_file_name_size
         steamapi_get_file_name_size = steamapi.ISteamRemoteStorage_GetFileNameAndSize
+        steamapi_get_file_name_size.argtypes = [ctypes.c_int, ctypes.c_int]
         steamapi_get_file_name_size.restype = ctypes.c_char_p
         global steamapi_get_file_size
         steamapi_get_file_size = steamapi.ISteamRemoteStorage_GetFileSize
+        steamapi_get_file_size.argtypes = [ctypes.c_char_p]
+        steamapi_get_file_size.restype = ctypes.c_int
         global steamapi_get_file_timestamp
         steamapi_get_file_timestamp = steamapi.ISteamRemoteStorage_GetFileTimestamp
+        steamapi_get_file_timestamp.argtypes = [ctypes.c_char_p]
+        steamapi_get_file_timestamp.restype = ctypes.c_int
         global steamapi_file_write
         steamapi_file_write = steamapi.ISteamRemoteStorage_FileWrite
+        steamapi_file_write.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
         global steamapi_file_read
         steamapi_file_read = steamapi.ISteamRemoteStorage_FileRead
+        steamapi_file_read.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
         global steamapi_shutdown
         steamapi_shutdown = steamapi.Shutdown
         global steamapi_cloud_enabled_account
@@ -67,7 +74,7 @@ def get_file_names():
     filenames = []
 
     for fileindex in range(steamapi_get_file_count()):
-        filename = steamapi_get_file_name_size(fileindex, None)
+        filename = steamapi_get_file_name_size(fileindex, 0).decode('utf-8')
         if steamfolder is not None:
             if filename.startswith(steamfolder + '/'):
                 filenames.append(filename[len(steamfolder) + 1:])
@@ -76,19 +83,19 @@ def get_file_names():
     return filenames
 
 def get_file_timestamp(filename):
-    return steamapi_get_file_timestamp(('' if steamfolder is None else steamfolder + '/') + filename)
+    return steamapi_get_file_timestamp((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'))
 
 def read_file(filename):
-    size = steamapi_get_file_size(('' if steamfolder is None else steamfolder + '/') + filename)
+    size = steamapi_get_file_size((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'))
     buffer = ctypes.create_string_buffer(size)
-    steamapi_file_read(('' if steamfolder is None else steamfolder + '/') + filename, buffer, size)
-    return None if not buffer.value else buffer.value
+    steamapi_file_read((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), buffer, size)
+    return None if not buffer.value else buffer.value.decode('utf-8')
 
 def write_file(filename, data):
     size = len(data)
     buffer = ctypes.create_string_buffer(size)
-    buffer.value = data
-    steamapi_file_write(('' if steamfolder is None else steamfolder + '/') + filename, buffer, size)
+    buffer.value = data.encode('utf-8')
+    steamapi_file_write((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), buffer, size)
 
 def shutdown():
     global steamfolder
