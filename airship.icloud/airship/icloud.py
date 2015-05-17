@@ -8,18 +8,16 @@ def init():
     icloudfolder = None
     global icloudfilesnotinsync
     icloudfilesnotinsync = []
+    global icloudplistregex
+    icloudplistregex = re.compile(r'^((?:[^/]+/)*)\.([^/]+)\.icloud$')
 
-    def compareversion(version1, version2): # http://stackoverflow.com/a/1714190/4270716
-        def normalize(v):
-            return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
-        version1n = normalize(version1)
-        version2n = normalize(version2)
-        return (version1n > version2n) - (version1n < version2n)
+    def normalize(v): # http://stackoverflow.com/a/1714190/4270716
+        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split('.')]
 
     if platform.system() == 'Darwin':
-        product = subprocess.check_output(['sw_vers', '-productName']).decode('utf-8')
-        version = subprocess.check_output(['sw_vers', '-productVersion']).decode('utf-8')
-        return (product == 'Mac OS X\n' and compareversion(version, '10.10') >= 0) or (product == 'iPhone OS\n' and compareversion(version, '8') >= 0) and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
+        product = subprocess.check_output(['sw_vers', '-productName']).decode('utf-8')[:-1]
+        version = normalize(subprocess.check_output(['sw_vers', '-productVersion']).decode('utf-8')[:-1])
+        return (product == 'Mac OS X' and version >= [10, 10]) or (product == 'iPhone OS' and version >= [8]) and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
     else:
         return False
 
@@ -39,25 +37,24 @@ def will_work():
 
 def get_file_names():
     filenames = []
-    def recursive_dir_contents(dir):
-        dircontents = os.listdir(icloudpath if dir is None else icloudpath + '/' + dir)
+
+    def recursive_dir_contents(directory):
+        dircontents = os.listdir(icloudpath if directory is None else icloudpath + '/' + directory)
         for item in dircontents:
-            if os.path.isdir(icloudpath + '/' + item if dir is None else icloudpath + '/' + dir + '/' + item):
-                recursive_dir_contents(item if dir is None else dir + '/' + item)
+            if os.path.isdir(icloudpath + '/' + item if directory is None else icloudpath + '/' + directory + '/' + item):
+                recursive_dir_contents(item if directory is None else directory + '/' + item)
             else:
-                filenames.append(item if dir is None else dir + '/' + item)
+                filenames.append(item if directory is None else directory + '/' + item)
 
     recursive_dir_contents(None)
 
     for filename in filenames:
-        match = re.match('^([^/]+/)?\.([^/]+)\.icloud$', filename)
+        match = icloudplistregex.match(filename)
         if match:
             filenames.remove(filename)
-            actualfilename = (match.group(1) if match.group(1) else '') + match.group(2)
-            filenames.append(actualfilename)
-            icloudfilesnotinsync.append(actualfilename)
+            icloudfilesnotinsync.append((match.group(1) if match.group(1) else '') + match.group(2))
 
-    return filenames
+    return filenames + icloudfilesnotinsync
 
 def get_file_timestamp(filename):
     if filename in icloudfilesnotinsync:
@@ -66,7 +63,7 @@ def get_file_timestamp(filename):
         return int(os.path.getmtime(icloudpath + '/' + filename))
 
 def read_file(filename):
-    with open(icloudpath + '/' + filename) as fileobject:
+    with open(icloudpath + '/' + filename, 'rb') as fileobject:
         data = fileobject.read()
     return data
 
@@ -77,7 +74,7 @@ def write_file(filename, data):
     if not os.path.isdir(directory):
         os.makedirs(directory)
 
-    with open(path, 'w') as fileobject:
+    with open(path, 'wb') as fileobject:
         fileobject.write(data)
 
 def shutdown():

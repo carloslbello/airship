@@ -6,7 +6,7 @@ def sync():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     games = [{ # The Banner Saga
-        'regex': '[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.save\.json',
+        'regex': re.compile(r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.save\.json$'),
         'folder': 'save/saga1',
         'steamcloudid': '237990',
         'icloudid': 'MQ92743Y4D~com~stoicstudio~BannerSaga'
@@ -52,7 +52,7 @@ def sync():
                         cancontinue = False
                         break
                     for filename in filenames:
-                        if re.match(game['regex'], filename):
+                        if game['regex'].match(filename):
                             if not filename in filetimestamps:
                                 filetimestamps[filename] = [-1] * len(gamemodules)
                             filetimestamps[filename][moduleindex] = gamemodules[moduleindex].get_file_timestamp(filename)
@@ -69,10 +69,9 @@ def sync():
                             for moduleindex in range(len(gamemodules)):
                                 if filetimestamps[filename][moduleindex] != -1:
                                     filedata[moduleindex] = gamemodules[moduleindex].read_file(filename)
-                            for dataindex in range(len(filedata)):
-                                if filedata[dataindex] is None and filetimestamps[filename][dataindex] != -1:
-                                    cancontinue = False
-                                    break
+                                    if filedata[moduleindex] is None:
+                                        cancontinue = False
+                                        break
                             if cancontinue:
                                 while newerfilesmayexist:
                                     newerfilesmayexist = False

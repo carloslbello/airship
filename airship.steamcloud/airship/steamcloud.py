@@ -87,15 +87,14 @@ def get_file_timestamp(filename):
 
 def read_file(filename):
     size = steamapi_get_file_size((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'))
-    buffer = ctypes.create_string_buffer(size)
-    steamapi_file_read((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), buffer, size)
-    return None if not buffer.value else buffer.value.decode('utf-8')
+    stringbuffer = ctypes.create_string_buffer(size)
+    steamapi_file_read((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), stringbuffer, size)
+    return None if not stringbuffer.value else bytearray(stringbuffer)
 
 def write_file(filename, data):
     size = len(data)
-    buffer = ctypes.create_string_buffer(size)
-    buffer.value = data.encode('utf-8')
-    steamapi_file_write((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), buffer, size)
+    stringbuffer = ctypes.create_string_buffer(bytes(data))
+    steamapi_file_write((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), stringbuffer, size)
 
 def shutdown():
     global steamfolder
