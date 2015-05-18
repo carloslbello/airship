@@ -1,9 +1,9 @@
 import os
-from airship import sync
+from .airship import sync
 
 class suppress_stdout_stderr(object): # http://stackoverflow.com/questions/11130156
     def __init__(self):
-        self.null_fds = [os.open(os.devnull,os.O_RDWR) for x in range(2)]
+        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
         self.save_fds = (os.dup(1), os.dup(2))
 
     def __enter__(self):

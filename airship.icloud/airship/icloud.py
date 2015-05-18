@@ -5,14 +5,16 @@ import os
 
 def init():
     global icloudfolder
-    icloudfolder = None
+    icloudfolder = ''
     global icloudfilesnotinsync
     icloudfilesnotinsync = []
     global icloudplistregex
     icloudplistregex = re.compile(r'^((?:[^/]+/)*)\.([^/]+)\.icloud$')
 
+    trailingzeroesregex = re.compile(r'(\.0+)*$')
+
     def normalize(v): # http://stackoverflow.com/a/1714190/4270716
-        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split('.')]
+        return [int(x) for x in trailingzeroesregex.sub('', v).split('.')]
 
     if platform.system() == 'Darwin':
         product = subprocess.check_output(['sw_vers', '-productName']).decode('utf-8')[:-1]
@@ -31,7 +33,7 @@ def set_folder(folder):
 
 def will_work():
     global icloudpath
-    icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + ('' if icloudfolder is None else '/' + icloudfolder))
+    icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + ('/' + icloudfolder if icloudfolder else ''))
 
     return os.path.isdir(icloudpath)
 
@@ -39,14 +41,14 @@ def get_file_names():
     filenames = []
 
     def recursive_dir_contents(directory):
-        dircontents = os.listdir(icloudpath if directory is None else icloudpath + '/' + directory)
+        dircontents = os.listdir(icloudpath + ('/' + directory if directory else ''))
         for item in dircontents:
-            if os.path.isdir(icloudpath + '/' + item if directory is None else icloudpath + '/' + directory + '/' + item):
-                recursive_dir_contents(item if directory is None else directory + '/' + item)
+            if os.path.isdir(icloudpath + ('/' + directory if directory else '') + '/' + item):
+                recursive_dir_contents((directory + '/' if directory else '') + item)
             else:
-                filenames.append(item if directory is None else directory + '/' + item)
+                filenames.append((directory + '/' if directory else '') + item)
 
-    recursive_dir_contents(None)
+    recursive_dir_contents('')
 
     for filename in filenames:
         match = icloudplistregex.match(filename)
@@ -69,7 +71,7 @@ def read_file(filename):
 
 def write_file(filename, data):
     path = icloudpath + '/' + filename
-    directory = path[:path.rfind('/')]
+    directory = os.path.dirname(path)
 
     if not os.path.isdir(directory):
         os.makedirs(directory)
@@ -79,6 +81,6 @@ def write_file(filename, data):
 
 def shutdown():
     global icloudfolder
-    icloudfolder = None
+    icloudfolder = ''
     global icloudfilesnotinsync
     icloudfilesnotinsync = []

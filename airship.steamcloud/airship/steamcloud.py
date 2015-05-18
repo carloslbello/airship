@@ -4,16 +4,17 @@ import ctypes
 
 def init():
     try:
+        path = os.path.dirname(os.path.abspath(__file__))
         system = platform.system()
         bits = platform.architecture()[0][:2]
 
         global steamapi
         if system == 'Windows':
-            steamapi = ctypes.CDLL('bin_win' + bits + '/CSteamworks.dll')
+            steamapi = ctypes.CDLL(path + '/bin_win' + bits + '/CSteamworks.dll')
         elif system == 'Darwin':
-            steamapi = ctypes.CDLL('bin_osx/CSteamworks.dylib')
+            steamapi = ctypes.CDLL(path + '/bin_osx/CSteamworks.dylib')
         else:
-            steamapi = ctypes.CDLL('bin_lnx' + bits + '/libCSteamworks.so')
+            steamapi = ctypes.CDLL(path + '/bin_lnx' + bits + '/libCSteamworks.so')
 
         global steamapi_init
         steamapi_init = steamapi.InitSafe
@@ -49,7 +50,7 @@ def init():
         steamapi_cloud_enabled_app.restype = ctypes.c_bool
 
         global steamfolder
-        steamfolder = None
+        steamfolder = ''
 
         is_steam_running = steamapi.IsSteamRunning
         is_steam_running.restype = ctypes.c_bool
@@ -75,7 +76,7 @@ def get_file_names():
 
     for fileindex in range(steamapi_get_file_count()):
         filename = steamapi_get_file_name_size(fileindex, 0).decode('utf-8')
-        if steamfolder is not None:
+        if steamfolder:
             if filename.startswith(steamfolder + '/'):
                 filenames.append(filename[len(steamfolder) + 1:])
         else:
@@ -83,20 +84,20 @@ def get_file_names():
     return filenames
 
 def get_file_timestamp(filename):
-    return steamapi_get_file_timestamp((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'))
+    return steamapi_get_file_timestamp(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'))
 
 def read_file(filename):
-    size = steamapi_get_file_size((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'))
+    size = steamapi_get_file_size(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'))
     stringbuffer = ctypes.create_string_buffer(size)
-    steamapi_file_read((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), stringbuffer, size)
+    steamapi_file_read(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'), stringbuffer, size)
     return None if not stringbuffer.value else bytearray(stringbuffer)
 
 def write_file(filename, data):
     size = len(data)
     stringbuffer = ctypes.create_string_buffer(bytes(data))
-    steamapi_file_write((('' if steamfolder is None else steamfolder + '/') + filename).encode('utf-8'), stringbuffer, size)
+    steamapi_file_write(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'), stringbuffer, size)
 
 def shutdown():
     global steamfolder
-    steamfolder = None
+    steamfolder = ''
     steamapi_shutdown()
