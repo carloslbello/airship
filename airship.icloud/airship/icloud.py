@@ -11,15 +11,9 @@ def init():
     global icloudplistregex
     icloudplistregex = re.compile(r'^((?:[^/]+/)*)\.([^/]+)\.icloud$')
 
-    trailingzeroesregex = re.compile(r'(\.0+)*$')
-
-    def normalize(v): # http://stackoverflow.com/a/1714190/4270716
-        return [int(x) for x in trailingzeroesregex.sub('', v).split('.')]
-
     if platform.system() == 'Darwin':
-        product = subprocess.check_output(['sw_vers', '-productName']).decode('utf-8')[:-1]
-        version = normalize(subprocess.check_output(['sw_vers', '-productVersion']).decode('utf-8')[:-1])
-        return (product == 'Mac OS X' and version >= [10, 10]) or (product == 'iPhone OS' and version >= [8]) and os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
+        return os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
+
     else:
         return False
 
