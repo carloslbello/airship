@@ -1,7 +1,11 @@
 import platform
-import subprocess
 import re
 import os
+
+try:
+    from os import scandir
+except ImportError:
+    from scandir import scandir
 
 def init():
     global icloudfolder
@@ -9,7 +13,7 @@ def init():
     global icloudfilesnotinsync
     icloudfilesnotinsync = []
     global icloudplistregex
-    icloudplistregex = re.compile(r'^((?:[^/]+/)*)\.([^/]+)\.icloud$')
+    icloudplistregex = re.compile(r'^\.([^/]+)\.icloud$')
 
     if platform.system() == 'Darwin':
         return os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
@@ -35,20 +39,17 @@ def get_file_names():
     filenames = []
 
     def recursive_dir_contents(directory):
-        dircontents = os.listdir(icloudpath + ('/' + directory if directory else ''))
-        for item in dircontents:
-            if os.path.isdir(icloudpath + ('/' + directory if directory else '') + '/' + item):
-                recursive_dir_contents((directory + '/' if directory else '') + item)
+        for entry in scandir(icloudpath + ('/' + directory if directory else '')):
+            if entry.is_dir():
+                recursive_dir_contents((directory + '/' if directory else '') + entry.name)
             else:
-                filenames.append((directory + '/' if directory else '') + item)
+                match = icloudplistregex.match(entry.name)
+                if match:
+                    icloudfilesnotinsync.append((directory + '/' if directory else '') + match.group(1))
+                else:
+                    filenames.append((directory + '/' if directory else '') + entry.name)
 
     recursive_dir_contents('')
-
-    for filename in filenames:
-        match = icloudplistregex.match(filename)
-        if match:
-            filenames.remove(filename)
-            icloudfilesnotinsync.append((match.group(1) if match.group(1) else '') + match.group(2))
 
     return filenames + icloudfilesnotinsync
 
