@@ -1,8 +1,14 @@
 from setuptools import setup
+from sys import version_info
+
+deps = []
+
+if version_info < (2, 7) or (version_info[0], version_info[1]) == (3, 0):
+    deps.append('importlib')
 
 setup(
     name='airship',
-    version='1.3.3',
+    version='1.3.6',
 
     description='A tool to synchronize game saves between clouds',
     long_description='Airship allows users to synchronize saved games between cloud platforms. Requires subpackages for each cloud service; for example, install airship-steamcloud and airship-icloud to sync between these two services.',
@@ -24,6 +30,7 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4'
@@ -32,6 +39,8 @@ setup(
     keywords='cloud games',
 
     packages=['airship'],
+
+    install_requires=deps,
 
     entry_points={
         'console_scripts': [

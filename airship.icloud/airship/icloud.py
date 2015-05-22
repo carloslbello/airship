@@ -1,5 +1,4 @@
 import platform
-import re
 import os
 
 try:
@@ -12,8 +11,6 @@ def init():
     icloudfolder = ''
     global icloudfilesnotinsync
     icloudfilesnotinsync = []
-    global icloudplistregex
-    icloudplistregex = re.compile(r'^\.([^/]+)\.icloud$')
 
     if platform.system() == 'Darwin':
         return os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
@@ -43,9 +40,8 @@ def get_file_names():
             if entry.is_dir():
                 recursive_dir_contents((directory + '/' if directory else '') + entry.name)
             else:
-                match = icloudplistregex.match(entry.name)
-                if match:
-                    icloudfilesnotinsync.append((directory + '/' if directory else '') + match.group(1))
+                if entry.name.startswith('.') and entry.name.endswith('.icloud'):
+                    icloudfilesnotinsync.append((directory + '/' if directory else '') + entry.name[1:-7])
                 else:
                     filenames.append((directory + '/' if directory else '') + entry.name)
 
