@@ -1,0 +1,3 @@
+import airship
+
+airship.sync()

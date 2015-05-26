@@ -14,3 +14,4 @@ Thumbs.db
 **/build/
 **.egg-info/
 *.pyc
+test/*
