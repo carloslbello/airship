@@ -1,14 +1,8 @@
 from setuptools import setup
-from sys import version_info
-
-deps = ['airship']
-
-if version_info < (3, 5):
-    deps.append('scandir')
 
 setup(
     name='airship-icloud',
-    version='1.3.6',
+    version='1.3.7',
 
     description='iCloud plugin for Airship',
 
@@ -39,5 +33,5 @@ setup(
 
     packages=['airship'],
 
-    install_requires=deps
+    install_requires=['airship']
 )

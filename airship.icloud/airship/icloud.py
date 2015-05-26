@@ -4,7 +4,10 @@ import os
 try:
     from os import scandir
 except ImportError:
-    from scandir import scandir
+    try:
+        from scandir import scandir
+    except ImportError:
+        pass
 
 def init():
     global icloudfolder
@@ -35,15 +38,26 @@ def will_work():
 def get_file_names():
     filenames = []
 
-    def recursive_dir_contents(directory):
-        for entry in scandir(icloudpath + ('/' + directory if directory else '')):
-            if entry.is_dir():
-                recursive_dir_contents((directory + '/' if directory else '') + entry.name)
-            else:
-                if entry.name.startswith('.') and entry.name.endswith('.icloud'):
-                    icloudfilesnotinsync.append((directory + '/' if directory else '') + entry.name[1:-7])
+    if 'scandir' in globals():
+        def recursive_dir_contents(directory):
+            for entry in scandir(icloudpath + ('/' + directory if directory else '')):
+                if entry.is_dir():
+                    recursive_dir_contents((directory + '/' if directory else '') + entry.name)
                 else:
-                    filenames.append((directory + '/' if directory else '') + entry.name)
+                    if entry.name.startswith('.') and entry.name.endswith('.icloud'):
+                        icloudfilesnotinsync.append((directory + '/' if directory else '') + entry.name[1:-7])
+                    else:
+                        filenames.append((directory + '/' if directory else '') + entry.name)
+    else:
+        def recursive_dir_contents(directory):
+            for entry in os.listdir(icloudpath + ('/' + directory if directory else '')):
+                if os.path.isdir(icloudpath + ('/' + directory if directory else '') + '/' + entry):
+                    recursive_dir_contents((directory + '/' if directory else '') + entry)
+                else:
+                    if entry.startswith('.') and entry.endswith('.icloud'):
+                        icloudfilesnotinsync.append((directory + '/' if directory else '') + entry[1:-7])
+                    else:
+                        filenames.append((directory + '/' if directory else '') + entry)
 
     recursive_dir_contents('')
 
