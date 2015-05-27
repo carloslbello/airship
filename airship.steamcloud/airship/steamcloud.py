@@ -57,7 +57,7 @@ def init():
 
         return is_steam_running()
 
-    except:
+    except OSError:
         return False
 
 

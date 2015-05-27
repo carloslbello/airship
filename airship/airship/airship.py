@@ -13,36 +13,40 @@ def sync():
     modulenum = 0
 
     for modulename in modules:
-        try:
-            module = importlib.import_module('.' + modulename, 'airship')
-            if module.init():
-                modules[modulename] = module
-                modulenum += 1
-        except:
-            pass
+        module = importlib.import_module('.' + modulename, 'airship')
+        if module.init():
+            modules[modulename] = module
+            modulenum += 1
 
     if modulenum > 1:
 
         for game in games:
             gamemodules = []
 
+            cancontinue = True
+
             for modulename in modules:
-                if modules[modulename] is not None and modulename + 'id' in game:
-                    module = modules[modulename]
-
-                    if modulename + 'folder' in game or 'folder' in game:
-                        module.set_folder(game['folder'] if not modulename + 'folder' in game else game[modulename + 'folder'])
-
-                    module.set_id(game[modulename + 'id'])
-
-                    if module.will_work():
-                        gamemodules.append(module)
+                if modulename + 'id' in game:
+                    if modules[modulename] is None:
+                        cancontinue = False
+                        break
                     else:
-                        module.shutdown()
+                        module = modules[modulename]
 
-            if len(gamemodules) > 1:
+                        if modulename + 'folder' in game or 'folder' in game:
+                            module.set_folder(game['folder'] if not modulename + 'folder' in game else game[modulename + 'folder'])
+
+                        module.set_id(game[modulename + 'id'])
+
+                        if module.will_work():
+                            gamemodules.append(module)
+                        else:
+                            module.shutdown()
+                            cancontinue = False
+                            break
+
+            if cancontinue:
                 filetimestamps = {}
-                cancontinue = True
                 for moduleindex in range(len(gamemodules)):
                     filenames = gamemodules[moduleindex].get_file_names()
                     if not filenames: # I don't believe you. Maybe you don't have local copies of the files?

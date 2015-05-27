@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship-steamcloud',
-    version='1.3.6',
+    version='1.3.8',
 
     description='Steam Cloud plugin for Airship',
 
@@ -26,6 +26,8 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4'
     ],
 
