@@ -13,10 +13,13 @@ def sync():
     modulenum = 0
 
     for modulename in modules:
-        module = importlib.import_module('.' + modulename, 'airship')
-        if module.init():
-            modules[modulename] = module
-            modulenum += 1
+        try:
+            module = importlib.import_module('.' + modulename, 'airship')
+            if module.init():
+                modules[modulename] = module
+                modulenum += 1
+        except ImportError:
+            pass
 
     if modulenum > 1:
 
