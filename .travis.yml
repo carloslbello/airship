@@ -8,4 +8,4 @@ python:
  - "pypy"
  - "pypy3"
 install: python install-all.py
-script: python -m airship
+script: airship
