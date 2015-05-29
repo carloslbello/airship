@@ -41,13 +41,13 @@ for package in packages:
             if filestoinclude:
                 with open('setup.py', 'w') as setupfile:
                     setupfile.write(setupfilecontents.replace(replace, str(filestoinclude)))
-                subprocess.call(['python', 'setup.py', 'bdist_wheel'])
+                subprocess.call(['python', 'setup.py', 'bdist_wheel', '--universal'])
                 for item in os.listdir('.'):
                     if os.path.isdir(item) and item != 'airship' and item != 'dist':
                         shutil.rmtree(item)
                 for item in os.listdir('dist'):
                     if 'any' in item:
-                        os.rename('dist/' + item, 'dist/' + item.replace('py2', 'py2.py3').replace('any', binaryfolders[binaryfolder]))
+                        os.rename('dist/' + item, 'dist/' + item.replace('any', binaryfolders[binaryfolder]))
                         break
         with open('setup.py', 'w') as setupfile:
             setupfile.write(setupfilecontents)
