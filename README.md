@@ -1,5 +1,6 @@
 # Airship
 [![PyPI version](https://badge.fury.io/py/airship.svg)](http://badge.fury.io/py/airship)
+
 Airship is a Python-based program to synchronize game saves between clouds, such as iCloud (for iOS) and Steam Cloud (for Steam).
 
 ## Downloading and installing
