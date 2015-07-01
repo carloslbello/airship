@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 
 """Used to test functionality in virtual environments created by virtualenv
@@ -10,7 +11,6 @@ packages = []
 
 for item in os.listdir(os.getcwd()):
     if item.startswith('airship') and os.path.isdir(item):
-        packages.append(item)
-
-for package in packages:
-    subprocess.call(['pip', 'install', '-U', directory + '/' + package])
+        packages.append(item.replace('.', '-'))
+subprocess.call(['pip', 'uninstall'] + packages)
+subprocess.call(['pip', 'install', '--find-links=dist'] + packages)

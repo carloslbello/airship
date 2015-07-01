@@ -9,6 +9,8 @@ except ImportError:
     except ImportError:
         pass
 
+name = 'icloud'
+
 def init():
     global icloudfolder
     icloudfolder = ''
