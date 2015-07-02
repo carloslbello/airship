@@ -29,19 +29,19 @@ def noop_after(filedata, modules, metadata):
 # The Banner Saga
 
 def bannersaga_transform_argb_rgb(orig):
-    result = b''
+    result = bytearray()
     orig = orig[13:]
     for i in range(len(orig) // 4):
         byteindex = i * 4
         result += orig[byteindex+1:byteindex+4]
-    return result
+    return bytes(result)
 
 def bannersaga_transform_rgb_argb(orig):
-    result = b'\x00\x00\x01\xe0\x00\x00\x01h\x00\x00\x00\x00\x00'
+    result = bytearray('\x00\x00\x01\xe0\x00\x00\x01h\x00\x00\x00\x00\x00')
     for i in range(len(orig) // 3):
         byteindex = i * 3
         result += b'\xFF' + orig[byteindex:byteindex+3]
-    return result
+    return bytes(result)
 
 def bannersaga_read(filename, timestamp, data, origin):
     if imagemanip:

@@ -8,7 +8,7 @@ import shutil
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 packages = []
-binaryfolders = {'bin_win32': 'win32', 'bin_win64': 'win64', 'bin_osx': 'macosx', 'bin_lnx32': 'linux_i686', 'bin_lnx64': 'linux_x86_64'}
+binaryfolders = {'bin_win32': 'win32', 'bin_win64': 'win64', 'bin_osx': 'macosx'} #, 'bin_lnx32': 'linux_i686', 'bin_lnx64': 'linux_x86_64'}
 
 packagedataregex = re.compile(r'^\s+\'airship\':\s+\[(.+)\]$', flags=re.MULTILINE)
 
