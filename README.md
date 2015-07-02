@@ -24,3 +24,4 @@ Airship will not synchronize a game if a cloud service is functioning, but has n
 
 ## Supported games
 + The Banner Saga ([Steam Cloud](http://store.steampowered.com/app/237990/), [iCloud](https://itunes.apple.com/us/app/banner-saga/id911006986))
++ Transistor ([Steam Cloud](http://store.steampowered.com/app/237930/), [iCloud](https://itunes.apple.com/us/app/transistor/id948857526))

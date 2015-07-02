@@ -37,10 +37,10 @@ def bannersaga_transform_argb_rgb(orig):
     return bytes(result)
 
 def bannersaga_transform_rgb_argb(orig):
-    result = bytearray('\x00\x00\x01\xe0\x00\x00\x01h\x00\x00\x00\x00\x00')
+    result = bytearray(b'\x00\x00\x01\xe0\x00\x00\x01h\x00\x00\x00\x00\x00')
     for i in range(len(orig) // 3):
         byteindex = i * 3
-        result += b'\xFF' + orig[byteindex:byteindex+3]
+        result += b'\xFF' + orig[byteindex:byteindex + 3]
     return bytes(result)
 
 def bannersaga_read(filename, timestamp, data, origin):
@@ -72,6 +72,17 @@ def bannersaga_write(filename, data, destination):
             data = bytearray(zlib.compress(bannersaga_transform_rgb_argb(data.tobytes())))
     return (filename, data)
 
+# Transistor
+
+def transistor_read(filename, timestamp, data, origin):
+    filename = filename[0].lower() + filename[1:]
+    return ([(filename, timestamp, data)], {})
+
+def transistor_write(filename, data, destination):
+    if destination == 'icloud':
+        filename = filename[0].upper() + filename[1:]
+    return (filename, data)
+
 # gameobj()
 
 def gameobj(obj):
@@ -96,13 +107,14 @@ def sync():
         'read': bannersaga_read,
         'compare': bannersaga_compare,
         'write': bannersaga_write
-    })] #, gameobj({ # Transistor
-        # 'regex': re.compile(r'^profile[1-5]\.sav$'),
-        # 'steamcloudid': '237930',
-        # 'icloudid': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
-        # 'icloudfrom': transistor_icloudfrom,
-        # 'icloudto': transistor_icloudto
-    # })]
+    }), gameobj({ # Transistor
+        'regex': re.compile(r'^[Pp]rofile[1-5]\.sav$'),
+        'steamcloudid': '237930',
+        'icloudid': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
+        'icloudfolder': 'Documents',
+        'read': transistor_read,
+        'write': transistor_write
+    })]
 
     modules = {'steamcloud': None, 'icloud': None}
     modulenum = 0
