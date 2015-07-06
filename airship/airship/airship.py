@@ -33,7 +33,7 @@ def bannersaga_transform_argb_rgb(orig):
     orig = orig[13:]
     for i in range(len(orig) // 4):
         byteindex = i * 4
-        result += orig[byteindex+1:byteindex+4]
+        result += orig[byteindex + 1:byteindex + 4]
     return bytes(result)
 
 def bannersaga_transform_rgb_argb(orig):
@@ -66,10 +66,10 @@ def bannersaga_write(filename, data, destination):
             filename = filename[:-3] + 'png'
             pngbytes = io.BytesIO()
             data.save(pngbytes, 'png', optimize=True)
-            data = bytearray(pngbytes.getvalue())
+            data = pngbytes.getvalue()
         if destination == 'icloud':
             filename = filename[:-3] + 'bmpzip'
-            data = bytearray(zlib.compress(bannersaga_transform_rgb_argb(data.tobytes())))
+            data = zlib.compress(bannersaga_transform_rgb_argb(data.tobytes()), 9)
     return (filename, data)
 
 # Transistor

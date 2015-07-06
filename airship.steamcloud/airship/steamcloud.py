@@ -92,11 +92,11 @@ def read_file(filename):
     size = steamapi_get_file_size(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'))
     stringbuffer = ctypes.create_string_buffer(size)
     steamapi_file_read(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'), stringbuffer, size)
-    return None if not stringbuffer.value else bytearray(stringbuffer)
+    return None if not stringbuffer.value else bytes(bytearray(stringbuffer))
 
 def write_file(filename, data):
     size = len(data)
-    stringbuffer = ctypes.create_string_buffer(bytes(data))
+    stringbuffer = ctypes.create_string_buffer(data)
     steamapi_file_write(((steamfolder + '/' if steamfolder else '') + filename).encode('utf-8'), stringbuffer, size)
 
 def shutdown():
