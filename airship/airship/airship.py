@@ -20,7 +20,7 @@ def identity_read(filename, timestamp, data, origin):
 def identity_compare(filename, data1, data2):
     return data1 == data2
 
-def identity_write(filename, data, destination):
+def identity_write(filename, data, destination, meta):
     return (filename, data)
 
 def noop_after(filedata, modules, metadata):
@@ -60,7 +60,7 @@ def bannersaga_compare(filename, data1, data2):
         return data1.histogram() == data2.histogram()
     return data1 == data2
 
-def bannersaga_write(filename, data, destination):
+def bannersaga_write(filename, data, destination, meta):
     if filename.endswith('img'):
         if destination == 'steamcloud':
             filename = filename[:-3] + 'png'
@@ -78,9 +78,39 @@ def transistor_read(filename, timestamp, data, origin):
     filename = filename[0].lower() + filename[1:]
     return ([(filename, timestamp, data)], {})
 
-def transistor_write(filename, data, destination):
+def transistor_write(filename, data, destination, meta):
     if destination == 'icloud':
         filename = filename[0].upper() + filename[1:]
+    return (filename, data)
+
+# Costume Quest
+
+costumequest_timeplayedregex = re.compile(b'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$')
+
+def costumequest_read(filename, timestamp, data, origin):
+    meta = {}
+    if origin == 'icloud':
+        match = costumequest_timeplayedregex.match(data).groups()
+        meta[filename] = match[1]
+        data = data[:4] + b'\x0b' + data[5:].replace(b'_mobile', b'').replace(match[0], b'')
+    return ([(filename, timestamp, data)], meta)
+
+def costumequest_write(filename, data, destination, meta):
+    if destination == 'icloud':
+        semicolonafterplacementsindex = data.find(b';', data.find(b'DestroyedPlacements'))
+        if semicolonafterplacementsindex == -1:
+            semicolonafterplacementsindex = len(data)
+        data = data[:4] + b'\x0c' + data[5:semicolonafterplacementsindex] + b';TimePlayed=' + (b'0' if not filename in meta else meta[filename]) + data[semicolonafterplacementsindex:]
+        lastworldsindex = 0
+        while True:
+            lastworldsindex = data.find(b'worlds/', lastworldsindex)
+            if lastworldsindex != -1:
+                lastworldsindex = lastworldsindex + 7
+                slashindex = data.find(b'/', lastworldsindex)
+                dotindex = data.find(b'.', lastworldsindex)
+                data = data[:slashindex] + b'_mobile' + data[slashindex:dotindex] + b'_mobile' + data[dotindex:]
+            else:
+                break
     return (filename, data)
 
 # gameobj()
@@ -114,6 +144,13 @@ def sync():
         'icloudfolder': 'Documents',
         'read': transistor_read,
         'write': transistor_write
+    }), gameobj({ # Costume Quest
+        'regex': re.compile(r'^CQ(_DLC)?_save_[012]$'),
+        'steamcloudid': '115100',
+        'icloudid': '8VM2L59D89~com~doublefine~cqios',
+        'icloudfolder': 'Documents',
+        'read': costumequest_read,
+        'write': costumequest_write
     })]
 
     modules = {'steamcloud': None, 'icloud': None}
@@ -210,7 +247,7 @@ def sync():
                                 files[filename] = filedata[filename][highesttimestampindex]
                                 for moduleindex in range(len(gamemodules)):
                                     if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                                        writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].name)
+                                        writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].name, metadata)
                                         gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                     game['after'](files, modules, metadata)
 
