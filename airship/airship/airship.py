@@ -10,9 +10,9 @@ try:
     import PIL.Image
     imagemanip = True
     print('airship: PIL.Image successfully imported')
-except ImportError, e:
+except ImportError as e:
     imagemanip = False
-    print('airship: PIL.Image failed to import; {}'.format(e))
+    print('airship: PIL.Image failed to import; {0}'.format(e))
 
 # Data manipulation functions
 
@@ -166,11 +166,11 @@ def sync():
 
     for module in modules:
         if module.init():
-            print('airship: airship.{}.init() returned True, using it'.format(module.name))
+            print('airship: airship.{0}.init() returned True, using it'.format(module.name))
             workingmodules[module.name] = module
             modulenum += 1
         else:
-            print('airship: airship.{}.init() returned False, not using it'.format(module.name))
+            print('airship: airship.{0}.init() returned False, not using it'.format(module.name))
 
     if modulenum > 1:
 
@@ -179,16 +179,16 @@ def sync():
             metadata = {}
             cancontinue = True
 
-            print('airship: Trying to sync {}'.format(game['name']))
+            print('airship: Trying to sync {0}'.format(game['name']))
 
             for module in modules:
                 if module.name + 'id' in game:
                     if not module.name in workingmodules:
-                        print('airship: Module airship.{} is not available; not syncing this game'.format(module.name))
+                        print('airship: Module airship.{0} is not available; not syncing this game'.format(module.name))
                         cancontinue = False
                         break
                     else:
-                        print('airship: Module airship.{} is available'.format(module.name))
+                        print('airship: Module airship.{0} is available'.format(module.name))
                         module = workingmodules[module.name]
 
                         if module.name + 'folder' in game or 'folder' in game:
@@ -197,10 +197,10 @@ def sync():
                         module.set_id(game[module.name + 'id'])
 
                         if module.will_work():
-                            print('airship: Module airship.{}.will_work() returned True, using it'.format(module.name))
+                            print('airship: Module airship.{0}.will_work() returned True, using it'.format(module.name))
                             gamemodules.append(module)
                         else:
-                            print('airship: Module airship.{}.will_work() returned False; not syncing this game'.format(module.name))
+                            print('airship: Module airship.{0}.will_work() returned False; not syncing this game'.format(module.name))
                             module.shutdown()
                             cancontinue = False
                             break
@@ -210,12 +210,8 @@ def sync():
                 filedata = {}
                 files = {}
                 for moduleindex in range(len(gamemodules)):
-                    filenames = gamemodules[moduleindex].get_file_names()
-                    if not filenames: # I don't believe you. Maybe you don't have local copies of the files?
-                        print('airship: Module airship.{}.get_file_names() returned []; not syncing this game'.format(gamemodules[moduleindex].name))
-                        cancontinue = False
-                        break
-                    for filename in filenames:
+                    cancontinue = False
+                    for filename in gamemodules[moduleindex].get_file_names():
                         if game['regex'].match(filename):
                             readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].name)
                             metadata.update(readobject[1])
@@ -226,11 +222,13 @@ def sync():
                                 if not itemfilename in filedata:
                                     filedata[itemfilename] = [-1] * len(gamemodules)
                                 filedata[itemfilename][moduleindex] = itemfiledata
+                            cancontinue = True
                 if cancontinue:
-                    print('airship: Syncing {}'.format(game['name']))
+                    print('airship: Syncing {0}'.format(game['name']))
                     for filename in filetimestamps:
                         for timestamp in filetimestamps[filename]:
                             if timestamp == 0:
+                                print('airship: At least one timestamp for file {0} is 0; not syncing this file'.format(filename))
                                 cancontinue = False
                                 break
                         if cancontinue:
@@ -264,8 +262,10 @@ def sync():
                                         writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].name, metadata)
                                         gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                     game['after'](files, modules, metadata)
+                else:
+                    print('airship: Module airship.{0}.get_file_names() didn\'t return any matched files; not syncing this game'.format(gamemodules[moduleindex].name))
 
-            print('airship: Completed syncing {}; shutting down modules'.format(game['name']))
+            print('airship: Completed syncing {0}; shutting down modules'.format(game['name']))
             for module in gamemodules:
                 module.shutdown()
     else:

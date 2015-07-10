@@ -14,8 +14,6 @@ name = 'icloud'
 def init():
     global icloudfolder
     icloudfolder = ''
-    global icloudfilesnotinsync
-    icloudfilesnotinsync = []
 
     if platform.system() == 'Darwin':
         return os.path.isdir(os.path.expanduser('~/Library/Mobile Documents'))
@@ -46,30 +44,21 @@ def get_file_names():
                 if entry.is_dir():
                     recursive_dir_contents((directory + '/' if directory else '') + entry.name)
                 else:
-                    if entry.name.startswith('.') and entry.name.endswith('.icloud'):
-                        icloudfilesnotinsync.append((directory + '/' if directory else '') + entry.name[1:-7])
-                    else:
-                        filenames.append((directory + '/' if directory else '') + entry.name)
+                    filenames.append((directory + '/' if directory else '') + entry.name)
     else:
         def recursive_dir_contents(directory):
             for entry in os.listdir(icloudpath + ('/' + directory if directory else '')):
                 if os.path.isdir(icloudpath + ('/' + directory if directory else '') + '/' + entry):
                     recursive_dir_contents((directory + '/' if directory else '') + entry)
                 else:
-                    if entry.startswith('.') and entry.endswith('.icloud'):
-                        icloudfilesnotinsync.append((directory + '/' if directory else '') + entry[1:-7])
-                    else:
-                        filenames.append((directory + '/' if directory else '') + entry)
+                    filenames.append((directory + '/' if directory else '') + entry)
 
     recursive_dir_contents('')
 
-    return filenames + icloudfilesnotinsync
+    return filenames
 
 def get_file_timestamp(filename):
-    if filename in icloudfilesnotinsync:
-        return 0
-    else:
-        return int(os.path.getmtime(icloudpath + '/' + filename))
+    return int(os.path.getmtime(icloudpath + '/' + filename))
 
 def read_file(filename):
     with open(icloudpath + '/' + filename, 'rb') as fileobject:
@@ -89,5 +78,3 @@ def write_file(filename, data):
 def shutdown():
     global icloudfolder
     icloudfolder = ''
-    global icloudfilesnotinsync
-    icloudfilesnotinsync = []
