@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 import shutil
+import requests
+from distutils.version import LooseVersion
 
 """Used to make wheels to upload to PyPI"""
 
@@ -11,15 +13,15 @@ packages = []
 binaryfolders = {'bin_win32': 'win32', 'bin_win64': 'win64', 'bin_osx': 'macosx'} #, 'bin_lnx32': 'linux_i686', 'bin_lnx64': 'linux_x86_64'}
 
 packagedataregex = re.compile(r'^\s+\'airship\':\s+\[(.+)\]$', flags=re.MULTILINE)
+packageversionregex = re.compile(r'^\s+version=\'([^\']+)\',$', flags=re.MULTILINE)
 
 for item in os.listdir('.'):
     if item.startswith('airship') and os.path.isdir(item):
-        packages.append(item)
+        with open(item + '/setup.py') as setupfile:
+            if LooseVersion(packageversionregex.search(setupfile.read()).groups()[0]) > LooseVersion(requests.get('http://pypi.python.org/pypi/' + item.replace('.', '-') + '/json').json()['info']['version']):
+                packages.append(item)
 
-if os.path.isdir('dist'):
-    for item in os.listdir('dist'):
-        os.remove('dist/' + item)
-else:
+if not os.path.isdir('dist'):
     os.mkdir('dist')
 
 for package in packages:

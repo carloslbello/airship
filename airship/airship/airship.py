@@ -1,5 +1,4 @@
 from __future__ import division
-import importlib
 import re
 import zlib
 import io
