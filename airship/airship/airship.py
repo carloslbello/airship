@@ -4,11 +4,16 @@ import re
 import zlib
 import io
 
+import icloud
+import steamcloud
+
 try:
     import PIL.Image
     imagemanip = True
-except ImportError:
+    print('airship: PIL.Image successfully imported')
+except ImportError, e:
     imagemanip = False
+    print('airship: PIL.Image failed to import; {}'.format(e))
 
 # Data manipulation functions
 
@@ -129,7 +134,8 @@ def gameobj(obj):
 # Main synchronization function
 
 def sync():
-    games = [gameobj({ # The Banner Saga
+    games = [gameobj({
+        'name': 'The Banner Saga',
         'regex': re.compile(r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|save\.json)$'),
         'folder': 'save/saga1',
         'steamcloudid': '237990',
@@ -137,14 +143,16 @@ def sync():
         'read': bannersaga_read,
         'compare': bannersaga_compare,
         'write': bannersaga_write
-    }), gameobj({ # Transistor
+    }), gameobj({
+        'name': 'Transistor',
         'regex': re.compile(r'^[Pp]rofile[1-5]\.sav$'),
         'steamcloudid': '237930',
         'icloudid': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
         'icloudfolder': 'Documents',
         'read': transistor_read,
         'write': transistor_write
-    }), gameobj({ # Costume Quest
+    }), gameobj({
+        'name': 'Costume Quest',
         'regex': re.compile(r'^CQ(_DLC)?_save_[012]$'),
         'steamcloudid': '115100',
         'icloudid': '8VM2L59D89~com~doublefine~cqios',
@@ -153,42 +161,47 @@ def sync():
         'write': costumequest_write
     })]
 
-    modules = {'steamcloud': None, 'icloud': None}
+    modules = [steamcloud, icloud]
+    workingmodules = {}
     modulenum = 0
 
-    for modulename in modules:
-        try:
-            module = importlib.import_module('.' + modulename, 'airship')
-            if module.init():
-                modules[modulename] = module
-                modulenum += 1
-        except ImportError:
-            pass
+    for module in modules:
+        if module.init():
+            print('airship: airship.{}.init() returned True, using it'.format(module.name))
+            workingmodules[module.name] = module
+            modulenum += 1
+        else:
+            print('airship: airship.{}.init() returned False, not using it'.format(module.name))
 
     if modulenum > 1:
 
         for game in games:
             gamemodules = []
             metadata = {}
-
             cancontinue = True
 
-            for modulename in modules:
-                if modulename + 'id' in game:
-                    if modules[modulename] is None:
+            print('airship: Trying to sync {}'.format(game['name']))
+
+            for module in modules:
+                if module.name + 'id' in game:
+                    if not module.name in workingmodules:
+                        print('airship: Module airship.{} is not available; not syncing this game'.format(module.name))
                         cancontinue = False
                         break
                     else:
-                        module = modules[modulename]
+                        print('airship: Module airship.{} is available'.format(module.name))
+                        module = workingmodules[module.name]
 
-                        if modulename + 'folder' in game or 'folder' in game:
-                            module.set_folder(game['folder'] if not modulename + 'folder' in game else game[modulename + 'folder'])
+                        if module.name + 'folder' in game or 'folder' in game:
+                            module.set_folder(game['folder'] if not module.name + 'folder' in game else game[module.name + 'folder'])
 
-                        module.set_id(game[modulename + 'id'])
+                        module.set_id(game[module.name + 'id'])
 
                         if module.will_work():
+                            print('airship: Module airship.{}.will_work() returned True, using it'.format(module.name))
                             gamemodules.append(module)
                         else:
+                            print('airship: Module airship.{}.will_work() returned False; not syncing this game'.format(module.name))
                             module.shutdown()
                             cancontinue = False
                             break
@@ -200,6 +213,7 @@ def sync():
                 for moduleindex in range(len(gamemodules)):
                     filenames = gamemodules[moduleindex].get_file_names()
                     if not filenames: # I don't believe you. Maybe you don't have local copies of the files?
+                        print('airship: Module airship.{}.get_file_names() returned []; not syncing this game'.format(gamemodules[moduleindex].name))
                         cancontinue = False
                         break
                     for filename in filenames:
@@ -214,6 +228,7 @@ def sync():
                                     filedata[itemfilename] = [-1] * len(gamemodules)
                                 filedata[itemfilename][moduleindex] = itemfiledata
                 if cancontinue:
+                    print('airship: Syncing {}'.format(game['name']))
                     for filename in filetimestamps:
                         for timestamp in filetimestamps[filename]:
                             if timestamp == 0:
@@ -251,5 +266,8 @@ def sync():
                                         gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                     game['after'](files, modules, metadata)
 
+            print('airship: Completed syncing {}; shutting down modules'.format(game['name']))
             for module in gamemodules:
                 module.shutdown()
+    else:
+        print('airship: Can\'t sync anything (fewer than 2 modules)')
