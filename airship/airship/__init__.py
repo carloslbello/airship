@@ -1,10 +1,5 @@
 import os
-import argparse
 from .airship import sync
-
-parser = argparse.ArgumentParser(description='Run the Airship script.')
-parser.add_argument('--no-suppress', dest='suppress', action='store_false', default=True, help='don\'t suppress output (useful for debugging)')
-arguments = parser.parse_args()
 
 class suppress_stdout_stderr(object): # http://stackoverflow.com/questions/11130156
     def __init__(self):
@@ -22,8 +17,5 @@ class suppress_stdout_stderr(object): # http://stackoverflow.com/questions/11130
         os.close(self.null_fds[1])
 
 def main():
-    if arguments.suppress:
-        with suppress_stdout_stderr():
-            sync()
-    else:
+    with suppress_stdout_stderr():
         sync()

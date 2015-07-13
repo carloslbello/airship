@@ -10,4 +10,4 @@ python:
 install:
   - "./get-bin.sh"
   - "python install-all.py"
-script: airship --no-suppress
+script: airship

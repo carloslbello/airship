@@ -3,16 +3,25 @@ import re
 import zlib
 import io
 
-import icloud
-import steamcloud
+modules = []
+
+try:
+    import icloud
+    modules.append(icloud)
+except ImportError:
+    pass
+
+try:
+    import steamcloud
+    modules.append(steamcloud)
+except ImportError as e:
+    pass
 
 try:
     import PIL.Image
     imagemanip = True
-    print('airship: PIL.Image successfully imported')
 except ImportError as e:
     imagemanip = False
-    print('airship: PIL.Image failed to import; {0}'.format(e))
 
 # Data manipulation functions
 
@@ -160,17 +169,15 @@ def sync():
         'write': costumequest_write
     })]
 
-    modules = [steamcloud, icloud]
-    workingmodules = {}
-    modulenum = 0
+    if len(modules) > 1:
 
-    for module in modules:
-        if module.init():
-            print('airship: airship.{0}.init() returned True, using it'.format(module.name))
-            workingmodules[module.name] = module
-            modulenum += 1
-        else:
-            print('airship: airship.{0}.init() returned False, not using it'.format(module.name))
+        workingmodules = {}
+        modulenum = 0
+
+        for module in modules:
+            if module.init():
+                workingmodules[module.name] = module
+                modulenum += 1
 
     if modulenum > 1:
 
@@ -179,16 +186,12 @@ def sync():
             metadata = {}
             cancontinue = True
 
-            print('airship: Trying to sync {0}'.format(game['name']))
-
             for module in modules:
                 if module.name + 'id' in game:
                     if not module.name in workingmodules:
-                        print('airship: Module airship.{0} is not available; not syncing this game'.format(module.name))
                         cancontinue = False
                         break
                     else:
-                        print('airship: Module airship.{0} is available'.format(module.name))
                         module = workingmodules[module.name]
 
                         if module.name + 'folder' in game or 'folder' in game:
@@ -197,10 +200,8 @@ def sync():
                         module.set_id(game[module.name + 'id'])
 
                         if module.will_work():
-                            print('airship: Module airship.{0}.will_work() returned True, using it'.format(module.name))
                             gamemodules.append(module)
                         else:
-                            print('airship: Module airship.{0}.will_work() returned False; not syncing this game'.format(module.name))
                             module.shutdown()
                             cancontinue = False
                             break
@@ -224,11 +225,9 @@ def sync():
                                 filedata[itemfilename][moduleindex] = itemfiledata
                             cancontinue = True
                 if cancontinue:
-                    print('airship: Syncing {0}'.format(game['name']))
                     for filename in filetimestamps:
                         for timestamp in filetimestamps[filename]:
                             if timestamp == 0:
-                                print('airship: At least one timestamp for file {0} is 0; not syncing this file'.format(filename))
                                 cancontinue = False
                                 break
                         if cancontinue:
@@ -262,11 +261,5 @@ def sync():
                                         writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].name, metadata)
                                         gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                     game['after'](files, modules, metadata)
-                else:
-                    print('airship: Module airship.{0}.get_file_names() didn\'t return any matched files; not syncing this game'.format(gamemodules[moduleindex].name))
-
-            print('airship: Completed syncing {0}; shutting down modules'.format(game['name']))
             for module in gamemodules:
                 module.shutdown()
-    else:
-        print('airship: Can\'t sync anything (fewer than 2 modules)')

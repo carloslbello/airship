@@ -36,10 +36,6 @@ setup(
 
     packages=['airship'],
 
-    extras_require={
-        ':python_version=="2.6"': ['argparse']
-    },
-
     entry_points={
         'console_scripts': [
             'airship=airship:main'
