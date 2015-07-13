@@ -15,9 +15,10 @@ if os.path.isdir(directory + '/test'):
 for folder in binaryfolders:
     os.makedirs(directory + '/test/' + folder)
 
-with open(directory + '/airship/airship/airship.py') as originalairship, open(directory + '/test/airship.py', 'w') as testairship:
-    for line in originalairship:
-        testairship.write(line.replace('importlib.import_module(\'.\' + modulename, \'airship\')', 'importlib.import_module(modulename)'))
+with open(directory + '/airship/airship/airship.py') as originalairship:
+    with open(directory + '/test/airship.py', 'w') as testairship:
+        for line in originalairship:
+            testairship.write(line.replace('importlib.import_module(\'.\' + modulename, \'airship\')', 'importlib.import_module(modulename)'))
 
 shutil.copy(directory + '/run.py', 'test')
 
