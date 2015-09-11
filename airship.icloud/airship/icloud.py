@@ -2,12 +2,9 @@ import platform
 import os
 
 try:
-    from os import scandir
+    from scandir import walk
 except ImportError:
-    try:
-        from scandir import scandir
-    except ImportError:
-        pass
+    from os import walk
 
 name = 'icloud'
 
@@ -38,22 +35,9 @@ def will_work():
 def get_file_names():
     filenames = []
 
-    if 'scandir' in globals():
-        def recursive_dir_contents(directory):
-            for entry in scandir(icloudpath + ('/' + directory if directory else '')):
-                if entry.is_dir():
-                    recursive_dir_contents((directory + '/' if directory else '') + entry.name)
-                else:
-                    filenames.append((directory + '/' if directory else '') + entry.name)
-    else:
-        def recursive_dir_contents(directory):
-            for entry in os.listdir(icloudpath + ('/' + directory if directory else '')):
-                if os.path.isdir(icloudpath + ('/' + directory if directory else '') + '/' + entry):
-                    recursive_dir_contents((directory + '/' if directory else '') + entry)
-                else:
-                    filenames.append((directory + '/' if directory else '') + entry)
-
-    recursive_dir_contents('')
+    for folder, _, files in walk(icloudpath):
+        for filename in files:
+            filenames.append((folder + '/' + filename)[len(icloudpath) + 1:])
 
     return filenames
 

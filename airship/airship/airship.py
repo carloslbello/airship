@@ -14,20 +14,20 @@ except ImportError:
 try:
     import steamcloud
     modules.append(steamcloud)
-except ImportError as e:
+except ImportError:
     pass
 
 try:
     import PIL.Image
     imagemanip = True
-except ImportError as e:
+except ImportError:
     imagemanip = False
 
 # Data manipulation functions
 
 # Identity
 
-def identity_read(filename, timestamp, data, origin):
+def identity_read(filename, timestamp, data, origin, regexes):
     return ([(filename, timestamp, data)], {})
 
 def identity_compare(filename, data1, data2):
@@ -56,17 +56,17 @@ def bannersaga_transform_rgb_argb(orig):
         result += b'\xFF' + orig[byteindex:byteindex + 3]
     return bytes(result)
 
-def bannersaga_read(filename, timestamp, data, origin):
-    if imagemanip:
-        if origin == 'steamcloud' and filename.endswith('png'):
-            filename = filename[:-3] + 'img'
-            data = PIL.Image.open(io.BytesIO(data))
-        if origin == 'icloud' and filename.endswith('bmpzip'):
-            filename = filename[:-6] + 'img'
-            data = PIL.Image.frombytes('RGB', (480, 360), bannersaga_transform_argb_rgb(zlib.decompress(bytes(data))))
-        return ([(filename, timestamp, data)], {})
-    else:
-        return ([] if (filename.endswith('png') or filename.endswith('bmpzip')) else [(filename, timestamp, data)], {})
+def bannersaga_read_imagemanip(filename, timestamp, data, origin, regexes):
+    if origin == 'steamcloud' and filename.endswith('png'):
+        filename = filename[:-3] + 'img'
+        data = PIL.Image.open(io.BytesIO(data))
+    if origin == 'icloud' and filename.endswith('bmpzip'):
+        filename = filename[:-6] + 'img'
+        data = PIL.Image.frombytes('RGB', (480, 360), bannersaga_transform_argb_rgb(zlib.decompress(bytes(data))))
+    return ([(filename, timestamp, data)], {})
+
+def bannersaga_read_noimagemanip(filename, timestamp, data, origin, regexes):
+    return ([] if (filename.endswith('png') or filename.endswith('bmpzip')) else [(filename, timestamp, data)], {})
 
 def bannersaga_compare(filename, data1, data2):
     if filename.endswith('img'):
@@ -87,7 +87,7 @@ def bannersaga_write(filename, data, destination, meta):
 
 # Transistor
 
-def transistor_read(filename, timestamp, data, origin):
+def transistor_read(filename, timestamp, data, origin, regexes):
     filename = filename[0].lower() + filename[1:]
     return ([(filename, timestamp, data)], {})
 
@@ -98,12 +98,11 @@ def transistor_write(filename, data, destination, meta):
 
 # Costume Quest
 
-costumequest_timeplayedregex = re.compile(b'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$')
-
-def costumequest_read(filename, timestamp, data, origin):
+def costumequest_read(filename, timestamp, data, origin, regexes):
     meta = {}
+    timeplayedregex = regexes['timeplayed']
     if origin == 'icloud':
-        match = costumequest_timeplayedregex.match(data).groups()
+        match = timeplayedregex.match(data).groups()
         meta[filename] = match[1]
         data = data[:4] + b'\x0b' + data[5:].replace(b'_mobile', b'').replace(match[0], b'')
     return ([(filename, timestamp, data)], meta)
@@ -142,26 +141,30 @@ def gameobj(obj):
 # Main synchronization function
 
 def sync():
-    games = [gameobj({
-        'name': 'The Banner Saga',
-        'regex': re.compile(r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|save\.json)$'),
+    games = [gameobj({ # The Banner Saga
+        'regexformats': {
+            'base': r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|save\.json)$'
+        },
         'folder': 'save/saga1',
         'steamcloudid': '237990',
         'icloudid': 'MQ92743Y4D~com~stoicstudio~BannerSaga',
-        'read': bannersaga_read,
+        'read': bannersaga_read_imagemanip if imagemanip else bannersaga_read_noimagemanip,
         'compare': bannersaga_compare,
         'write': bannersaga_write
-    }), gameobj({
-        'name': 'Transistor',
-        'regex': re.compile(r'^[Pp]rofile[1-5]\.sav$'),
+    }), gameobj({ # Transistor
+        'regexformats': {
+            'base': r'^[Pp]rofile[1-5]\.sav$'
+        },
         'steamcloudid': '237930',
         'icloudid': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
         'icloudfolder': 'Documents',
         'read': transistor_read,
         'write': transistor_write
-    }), gameobj({
-        'name': 'Costume Quest',
-        'regex': re.compile(r'^CQ(_DLC)?_save_[012]$'),
+    }), gameobj({ # Costume Quest
+        'regexformats': {
+            'base': r'^CQ(_DLC)?_save_[012]$',
+            'timeplayed': b'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$'
+        },
         'steamcloudid': '115100',
         'icloudid': '8VM2L59D89~com~doublefine~cqios',
         'icloudfolder': 'Documents',
@@ -207,14 +210,20 @@ def sync():
                                 break
 
                 if cancontinue:
+                    regexes = {}
                     filetimestamps = {}
                     filedata = {}
                     files = {}
+                    for regex in game['regexformats']:
+                        if regex == 'base':
+                            fileregex = re.compile(game['regexformats']['base'])
+                        else:
+                            regexes[regex] = re.compile(game['regexformats'][regex])
                     for moduleindex in range(len(gamemodules)):
                         cancontinue = False
                         for filename in gamemodules[moduleindex].get_file_names():
-                            if game['regex'].match(filename):
-                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].name)
+                            if fileregex.match(filename):
+                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].name, regexes)
                                 metadata.update(readobject[1])
                                 for itemfilename, itemfiletimestamp, itemfiledata in readobject[0]:
                                     if not itemfilename in filetimestamps:
