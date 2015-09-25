@@ -70,7 +70,7 @@ def bannersaga_read_noimagemanip(filename, timestamp, data, origin, regexes):
 
 def bannersaga_compare(filename, data1, data2):
     if filename.endswith('img'):
-        return data1.histogram() == data2.histogram()
+        return data1.tobytes() == data2.tobytes()
     return data1 == data2
 
 def bannersaga_write(filename, data, destination, meta):

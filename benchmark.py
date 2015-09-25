@@ -14,7 +14,7 @@ import subprocess32 as subprocess
 devnull = open(os.devnull, 'w')
 boolean = [[False, True]]
 terminalwidth = int(sys.argv[2])
-numtimes = 5
+numtimes = 2
 item = sys.argv[1]
 
 def benchmark(command):
