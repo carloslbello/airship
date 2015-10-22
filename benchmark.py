@@ -13,8 +13,7 @@ import subprocess32 as subprocess
 
 devnull = open(os.devnull, 'w')
 boolean = [[False, True]]
-terminalwidth = int(sys.argv[2])
-numtimes = 2
+numtimes = 5
 item = sys.argv[1]
 
 def benchmark(command):
@@ -31,64 +30,81 @@ def benchmark_multiple(command, times):
         num += 1
     return prod ** (1.0/times)
 
+def get_python_ver(executable):
+    if executable.startswith('python'):
+        name = 'Python'
+    if executable.startswith('pypy'):
+        name = 'PyPy'
+
+    vflag = subprocess.Popen(['python', '-V'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[1 if not (executable.startswith('python3.4') or executable.startswith('python3.5')) else 0][:-1]
+    index = vflag.find(name) + len(name) + 1
+    if executable.startswith('pypy3'):
+        name = 'PyPy3'
+    spaceindex = vflag.find(' ', index)
+    if spaceindex == -1:
+        ver = vflag[index:]
+    else:
+        ver = vflag[index:spaceindex]
+    return name + ' ' + ver
+
 results = []
 failedinstalls = []
-optionals = ['pillow']
+optionals = ['pillow', 'scandir']
+applicableoptionals = ['pillow']
+
 
 execfile('envs/' + item + '/bin/activate_this.py', dict(__file__='envs/' + item + '/bin/activate_this.py'))
 
 if subprocess.call(['python', '-c', 'import os;exit(not hasattr(os,\'scandir\'))']) != 0:
-    optionals.append('scandir')
+    applicableoptionals.append('scandir')
 
 basetime = 0
 
+optionalsets = []
+
 for permutation in itertools.product(*boolean * len(optionals)):
+    optset = []
+    for index in range(len(permutation)):
+        if permutation[index]:
+            optset.append(optionals[index])
+    optionalsets.append(optset)
+
+line = get_python_ver(item) + ','
+
+for optset in optionalsets:
     packages = {}
-
-    for index in range(len(optionals)):
-        packages[optionals[index]] = permutation[index]
-
-    packagestr = ''
+    for package in optionals:
+        packages[package] = False
     candothething = True
-    installedpackages = []
-
-    for package in packages:
-        packageinstalled = subprocess.call(['pip', 'show', package], stdout=devnull, stderr=devnull) == 0
-        prevfailedinstall = package in failedinstalls
-        if packageinstalled and not packages[package]:
-            subprocess.call(['pip', 'uninstall', '-y', package], stdout=devnull, stderr=devnull)
-        if not packageinstalled and packages[package]:
-            try:
-                failedinstall = subprocess.call(['pip', 'install', package], stdout=devnull, stderr=devnull, timeout=30) != 0
-            except subprocess.TimeoutExpired:
-                failedinstall = True
-            if failedinstall or prevfailedinstall:
-                if not prevfailedinstall:
-                    failedinstalls.append(package)
-                subprocess.call(['pip', 'uninstall', '-y', package], stdout=devnull, stderr=devnull)
-                candothething = False
-        if packages[package]:
-            installedpackages.append(package)
-
-    packagestr = ''
-    if installedpackages:
-        packagestr = ' (' + ', '.join(installedpackages) + ')'
+    for package in optset:
+        if not package in applicableoptionals:
+            candothething = False
+            line += 'N/A,'
+            break
+        packages[package] = True
 
     if candothething:
-        subprocess.call(['python', 'test.py'])
-        left = 'G-mean time of ' + str(numtimes) + packagestr + ':'
-        result = benchmark_multiple(['python', 'test/run.py'], numtimes)
-        if not installedpackages:
-            basetime = result
-        difference = result - basetime
-        sign = ''
-        if difference == 0:
-            sign = u'\u00b1'
-        if difference > 0:
-            sign = '+'
-        right = '%.4f' % result + ' ' + sign + '%.4f' % difference
-        print(left + ' ' * (terminalwidth - len(left) - 14) + right)
+        for package in packages:
+            packageinstalled = subprocess.call(['pip', 'show', package], stdout=devnull, stderr=devnull) == 0
+            prevfailedinstall = package in failedinstalls
+            if packageinstalled and not packages[package]:
+                subprocess.call(['pip', 'uninstall', '-y', package], stdout=devnull, stderr=devnull)
+            if not packageinstalled and packages[package]:
+                if not prevfailedinstall:
+                    try:
+                        failedinstall = subprocess.call(['pip', 'install', package], stdout=devnull, stderr=devnull, timeout=30) != 0
+                    except subprocess.TimeoutExpired:
+                        failedinstall = True
+                if failedinstall or prevfailedinstall:
+                    if not prevfailedinstall:
+                        failedinstalls.append(package)
+                    subprocess.call(['pip', 'uninstall', '-y', package], stdout=devnull, stderr=devnull)
+                    candothething = False
+                    line += 'N/A,'
+                    break
 
-if failedinstalls:
-    failed = 'Package' + ('s' if len(failedinstalls) > 1 else '') + ' ' + ', '.join(failedinstalls) + ' failed to install and w' + ('ere' if len(failedinstalls) > 1 else 'as') + ' not used'
-    print(failed + ' ' * (terminalwidth - len(failed) - 14) + u'0.0000 \u00b10.0000')
+        if candothething:
+            line += str(benchmark_multiple(['python', 'test/run.py'], numtimes)) + ','
+
+with open('bench.csv', 'a') as bench:
+    bench.write(line[:-1] + '\n')
