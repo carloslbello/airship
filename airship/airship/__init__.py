@@ -1,5 +1,5 @@
 import os
-from .airship import sync
+import sys
 
 class suppress_stdout_stderr(object): # http://stackoverflow.com/questions/11130156
     def __init__(self):
@@ -17,5 +17,10 @@ class suppress_stdout_stderr(object): # http://stackoverflow.com/questions/11130
         os.close(self.null_fds[1])
 
 def main():
-    with suppress_stdout_stderr():
-        sync()
+    if len(sys.argv) > 1 and sys.argv[1] == 'cleanbin':
+        from .cleanbin import cleanbin
+        cleanbin()
+    else:
+        from .airship import sync
+        with suppress_stdout_stderr():
+            sync()

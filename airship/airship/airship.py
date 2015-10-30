@@ -125,6 +125,14 @@ def costumequest_write(filename, data, destination, meta):
                 break
     return (filename, data)
 
+# Race the Sun
+
+def racethesun_read(filename, timestamp, data, origin, regexes):
+    return ([('savegame.xml', timestamp, data)], {})
+
+def racethesun_write(filename, data, destination, meta):
+    return ('rts_save.xml' if destination == 'icloud' else 'savegame.xml', data)
+
 # gameobj()
 
 def gameobj(obj):
@@ -170,6 +178,15 @@ def sync():
         'icloudfolder': 'Documents',
         'read': costumequest_read,
         'write': costumequest_write
+    }), gameobj({ # Race the Sun
+        'regexformats': {
+            'base': r'^(savegame|rts_save)\.xml$'
+        },
+        'steamcloudid': '253030',
+        'icloudid': 'iCloud~com~flippfly~racethesun',
+        'icloudfolder': 'Documents',
+        'read': racethesun_read,
+        'write': racethesun_write
     })]
 
     if len(modules) > 1:

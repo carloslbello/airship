@@ -28,7 +28,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4'
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5'
     ],
 
     keywords='cloud games',
@@ -37,3 +38,5 @@ setup(
 
     install_requires=['airship']
 )
+#!@any=macosx_10_7_universal
+# ^ until a bug in pip is fixed (https://github.com/pypa/pip/issues/3202), this must not be used
