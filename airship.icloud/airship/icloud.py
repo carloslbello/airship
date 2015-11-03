@@ -5,9 +5,7 @@ try:
     from scandir import walk
 except ImportError:
     from os import walk
-
-name = 'icloud'
-
+    
 def init():
     global icloudfolder
     icloudfolder = ''

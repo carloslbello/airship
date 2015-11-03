@@ -154,8 +154,14 @@ def sync():
             'base': r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartoft|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bjorulf|boersgard|finale|grofheim|hadeborg|ingrid|marek|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|save\.json)$'
         },
         'folder': 'save/saga1',
-        'steamcloudid': '237990',
-        'icloudid': 'MQ92743Y4D~com~stoicstudio~BannerSaga',
+        'modules': {
+            'steamcloud': {
+                'id': '237990'
+            },
+            'icloud': {
+                'id': 'MQ92743Y4D~com~stoicstudio~BannerSaga'
+            }
+        },
         'read': bannersaga_read_imagemanip if imagemanip else bannersaga_read_noimagemanip,
         'compare': bannersaga_compare,
         'write': bannersaga_write
@@ -163,9 +169,15 @@ def sync():
         'regexformats': {
             'base': r'^[Pp]rofile[1-5]\.sav$'
         },
-        'steamcloudid': '237930',
-        'icloudid': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
-        'icloudfolder': 'Documents',
+        'modules': {
+            'steamcloud': {
+                'id': '237930'
+            },
+            'icloud': {
+                'id': 'GPYC69L4CR~iCloud~com~supergiantgames~transistor',
+                'folder': 'Documents',
+            }
+        },
         'read': transistor_read,
         'write': transistor_write
     }), gameobj({ # Costume Quest
@@ -173,18 +185,30 @@ def sync():
             'base': r'^CQ(_DLC)?_save_[012]$',
             'timeplayed': b'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$'
         },
-        'steamcloudid': '115100',
-        'icloudid': '8VM2L59D89~com~doublefine~cqios',
-        'icloudfolder': 'Documents',
+        'modules': {
+            'steamcloud': {
+                'id': '115100'
+            },
+            'icloud': {
+                'id': '8VM2L59D89~com~doublefine~cqios',
+                'folder': 'Documents'
+            }
+        },
         'read': costumequest_read,
         'write': costumequest_write
     }), gameobj({ # Race the Sun
         'regexformats': {
             'base': r'^(savegame|rts_save)\.xml$'
         },
-        'steamcloudid': '253030',
-        'icloudid': 'iCloud~com~flippfly~racethesun',
-        'icloudfolder': 'Documents',
+        'modules': {
+            'steamcloud': {
+                'id': '253030'
+            },
+            'icloud': {
+                'id': 'iCloud~com~flippfly~racethesun',
+                'folder': 'Documents'
+            }
+        },
         'read': racethesun_read,
         'write': racethesun_write
     })]
@@ -196,7 +220,7 @@ def sync():
 
         for module in modules:
             if module.init():
-                workingmodules[module.name] = module
+                workingmodules[module.__name__] = module
                 modulenum += 1
 
         if modulenum > 1:
@@ -207,17 +231,17 @@ def sync():
                 cancontinue = True
 
                 for module in modules:
-                    if module.name + 'id' in game:
-                        if not module.name in workingmodules:
+                    if module.__name__ in game['modules']:
+                        if not module.__name__ in workingmodules:
                             cancontinue = False
                             break
                         else:
-                            module = workingmodules[module.name]
+                            module = workingmodules[module.__name__]
 
-                            if module.name + 'folder' in game or 'folder' in game:
-                                module.set_folder(game['folder'] if not module.name + 'folder' in game else game[module.name + 'folder'])
+                            if 'folder' in game['modules'][module.__name__] or 'folder' in game:
+                                module.set_folder(game['folder'] if not 'folder' in game['modules'][module.__name__] else game['modules'][module.__name__]['folder'])
 
-                            module.set_id(game[module.name + 'id'])
+                            module.set_id(game['modules'][module.__name__]['id'])
 
                             if module.will_work():
                                 gamemodules.append(module)
@@ -240,7 +264,7 @@ def sync():
                         cancontinue = False
                         for filename in gamemodules[moduleindex].get_file_names():
                             if fileregex.match(filename):
-                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].name, regexes)
+                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].__name__, regexes)
                                 metadata.update(readobject[1])
                                 for itemfilename, itemfiletimestamp, itemfiledata in readobject[0]:
                                     if not itemfilename in filetimestamps:
@@ -284,7 +308,7 @@ def sync():
                                     files[filename] = filedata[filename][highesttimestampindex]
                                     for moduleindex in range(len(gamemodules)):
                                         if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                                            writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].name, metadata)
+                                            writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].__name__, metadata)
                                             gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                         game['after'](files, modules, metadata)
                 for module in gamemodules:

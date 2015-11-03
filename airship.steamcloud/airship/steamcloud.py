@@ -2,8 +2,6 @@ import os
 import platform
 import ctypes
 
-name = 'steamcloud'
-
 def init():
     try:
         path = os.path.dirname(os.path.abspath(__file__))
