@@ -23,6 +23,14 @@ try:
 except ImportError:
     imagemanip = False
 
+# Module name cleaner
+
+def modulename(name):
+    dotindex = name.rfind('.')
+    if dotindex != -1:
+        name = name[dotindex + 1:]
+    return name
+
 # Data manipulation functions
 
 # Identity
@@ -220,7 +228,7 @@ def sync():
 
         for module in modules:
             if module.init():
-                workingmodules[module.__name__] = module
+                workingmodules[modulename(module.__name__)] = module
                 modulenum += 1
 
         if modulenum > 1:
@@ -231,17 +239,18 @@ def sync():
                 cancontinue = True
 
                 for module in modules:
-                    if module.__name__ in game['modules']:
-                        if not module.__name__ in workingmodules:
+                    name = modulename(module.__name__)
+                    if name in game['modules']:
+                        if not name in workingmodules:
                             cancontinue = False
                             break
                         else:
-                            module = workingmodules[module.__name__]
+                            module = workingmodules[name]
 
-                            if 'folder' in game['modules'][module.__name__] or 'folder' in game:
-                                module.set_folder(game['folder'] if not 'folder' in game['modules'][module.__name__] else game['modules'][module.__name__]['folder'])
+                            if 'folder' in game['modules'][name] or 'folder' in game:
+                                module.set_folder(game['folder'] if not 'folder' in game['modules'][name] else game['modules'][name]['folder'])
 
-                            module.set_id(game['modules'][module.__name__]['id'])
+                            module.set_id(game['modules'][name]['id'])
 
                             if module.will_work():
                                 gamemodules.append(module)
@@ -264,7 +273,7 @@ def sync():
                         cancontinue = False
                         for filename in gamemodules[moduleindex].get_file_names():
                             if fileregex.match(filename):
-                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), gamemodules[moduleindex].__name__, regexes)
+                                readobject = game['read'](filename, gamemodules[moduleindex].get_file_timestamp(filename), gamemodules[moduleindex].read_file(filename), modulename(gamemodules[moduleindex].__name__), regexes)
                                 metadata.update(readobject[1])
                                 for itemfilename, itemfiletimestamp, itemfiledata in readobject[0]:
                                     if not itemfilename in filetimestamps:
@@ -308,7 +317,7 @@ def sync():
                                     files[filename] = filedata[filename][highesttimestampindex]
                                     for moduleindex in range(len(gamemodules)):
                                         if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                                            writeobject = game['write'](filename, files[filename], gamemodules[moduleindex].__name__, metadata)
+                                            writeobject = game['write'](filename, files[filename], modulename(gamemodules[moduleindex].__name__), metadata)
                                             gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
                         game['after'](files, modules, metadata)
                 for module in gamemodules:
