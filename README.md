@@ -10,7 +10,7 @@ Before installing and running Airship, you must install these dependencies.
 - All functionality depends on having Python version 2.6 or above installed (3.2 or above works too). Your operating system may have Python installed already; to check, type `python -V` into your terminal or command line. Otherwise, [download Python](https://www.python.org/downloads).
 - It is *required* to install Airship through `pip`. [Download `pip`](https://pip.pypa.io/en/stable/installing.html#install-pip).
 - Steam Cloud functionality depends on having Steam installed, logged in, and running while Airship is running. [Download Steam](https://store.steampowered.com/about).
-- iCloud functionality depends on running Airship on OS X 10.10 Yosemite or above, being logged into iCloud, and having iCloud Drive synchronization enabled in System Preferences.
+- iCloud functionality depends on running Airship on OS X 10.7 Lion or above, being logged into iCloud, and having Documents or iCloud Drive synchronization enabled in System Preferences (depending on your version of OS X).
 - Banner Saga save image preview functionality requires a [Pillow](https://python-pillow.github.io) installation. Download it through `pip` by doing `pip install pillow`. This is optional and save games will be synchronized even if Pillow is not installed.
 
 Download the latest release by running `pip install airship` and adding appropriate modules (like `pip install airship airship-steamcloud airship-icloud`).
