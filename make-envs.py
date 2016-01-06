@@ -16,7 +16,7 @@ if os.path.isdir(directory + '/envs'):
 
 os.mkdir(directory + '/envs')
 
-pythons = [('python2.6', '2'), ('python2.7', '2'), ('python3.2', '3'), ('python3.3', '3'), ('python3.4', '3'), ('python3.5', '3'), ('pypy', '2'), ('pypy3', '3')]
+pythons = [('python2.6', '2'), ('python2.7', '2'), ('python3.2', '3'), ('python3.3', '3'), ('python3.4', '3'), ('python3.5', '3'), ('pypy', '2'), ('pypy3', '3'), ('jython', '2')]
 
 nonexistentmajorversions = []
 
@@ -34,11 +34,14 @@ if nonexistentmajorversions:
 
 def get_python_ver(python):
     if executable.startswith('python'):
-        name = 'Python'
-    if executable.startswith('pypy'):
+        name = 'CPython'
+    elif executable.startswith('pypy'):
         name = 'PyPy'
+    else:
+        name = executable[0].upper() + executable[1:]
 
     vflag = subprocess.Popen([executable, '-V'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[1 if not (executable.startswith('python3.4') or executable.startswith('python3.5')) else 0][:-1]
+    stdlib = subprocess.check_output([executable, '-c', 'import sys;sys.stdout.write(\'{0}.{1}.{2}\'.format(*sys.version_info))'])
     index = vflag.find(name) + len(name) + 1
     if executable.startswith('pypy3'):
         name = 'PyPy3'
@@ -47,14 +50,26 @@ def get_python_ver(python):
         ver = vflag[index:]
     else:
         ver = vflag[index:spaceindex]
-    return (name, ver)
+    return (name, ver, stdlib)
+
+longestname = 0
+longestver = 0
+longeststdlib = 0
+
+pythonsinstalled = []
 
 for (executable, major) in pythons:
     if not major in nonexistentmajorversions:
         if subprocess.call(['which', executable], stdout=devnull, stderr=devnull) != 0:
             print('Couldn\'t find ' + executable + ', not making env')
         else:
-            name, ver = get_python_ver(executable)
-            print('Making ' + name + ' ' * (7 - len(name)) + ver + ' ' * (7 - len(ver)) + 'env ... ', end='')
-            path = subprocess.check_output(['which', executable])[:-1]
-            print('done' if subprocess.call(['python' + major, '-m', 'virtualenv', '-p', path, directory + '/envs/' + executable], stdout=devnull, stderr=devnull) == 0 else 'failed!')
+            name, ver, stdlib = get_python_ver(executable)
+            longestname = max(longestname, len(name))
+            longestver = max(longestver, len(ver))
+            longeststdlib = max(longeststdlib, len(stdlib))
+            pythonsinstalled.append((executable, major, name, ver, stdlib))
+
+for (executable, major, name, ver, stdlib) in pythonsinstalled:
+    print('Making ' + name + ' ' * (longestname + 1 - len(name)) + ver + ' ' * (longestver + 1 - len(ver)) + ' (stdlib ' + stdlib + ')' + ' ' * (longeststdlib + 1 - len(stdlib)) + 'env ... ', end='')
+    path = subprocess.check_output(['which', executable]).rstrip()
+    print('done' if subprocess.call(['python' + major, '-m', 'virtualenv', '-p', path, directory + '/envs/' + executable], stdout=devnull, stderr=devnull) == 0 else 'failed!')

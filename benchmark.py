@@ -30,15 +30,17 @@ def benchmark_multiple(command, times):
         num += 1
     return prod ** (1.0/times)
 
-def get_python_ver(executable):
-    if executable.startswith('python'):
-        name = 'Python'
-    if executable.startswith('pypy'):
+def get_python_ver(python):
+    if python.startswith('python'):
+        name = 'CPython'
+    elif python.startswith('pypy'):
         name = 'PyPy'
+    else:
+        name = python[0].upper() + python[1:]
 
-    vflag = subprocess.Popen(['python', '-V'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[1 if not (executable.startswith('python3.4') or executable.startswith('python3.5')) else 0][:-1]
+    vflag = subprocess.Popen([python, '-V'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[1 if not (python.startswith('python3.4') or python.startswith('python3.5')) else 0][:-1]
     index = vflag.find(name) + len(name) + 1
-    if executable.startswith('pypy3'):
+    if python.startswith('pypy3'):
         name = 'PyPy3'
     spaceindex = vflag.find(' ', index)
     if spaceindex == -1:
