@@ -77,7 +77,7 @@ def get_file_names():
     for fileindex in range(steamapi_get_file_count()):
         filename = steamapi_get_file_name_size(fileindex, 0).decode('utf-8')
         if steamfolder:
-            if filename.startswith(steamfolder + '/'):
+            if filename.lower().startswith(steamfolder + '/'):
                 filenames.append(filename[len(steamfolder) + 1:])
         else:
             filenames.append(filename)

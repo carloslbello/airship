@@ -15,11 +15,12 @@ binaryfolders = {'bin_win32': 'win32', 'bin_win64': 'win64', 'bin_osx': 'macosx'
 packagedataregex = re.compile(r'^\s+\'airship\':\s+\[(.+)\]$', flags=re.MULTILINE)
 packageversionregex = re.compile(r'^\s+version=\'([^\']+)\',$', flags=re.MULTILINE)
 
-for item in os.listdir('.'):
-    if item.startswith('airship') and os.path.isdir(item):
-        with open(item + '/setup.py') as setupfile:
-            if LooseVersion(packageversionregex.search(setupfile.read()).groups()[0]) > LooseVersion(requests.get('http://pypi.python.org/pypi/' + item.replace('.', '-') + '/json').json()['info']['version']):
-                packages.append(item)
+if not packages:
+    for item in os.listdir('.'):
+        if item.startswith('airship') and os.path.isdir(item):
+            with open(item + '/setup.py') as setupfile:
+                if LooseVersion(packageversionregex.search(setupfile.read()).groups()[0]) > LooseVersion(requests.get('http://pypi.python.org/pypi/' + item.replace('.', '-') + '/json').json()['info']['version']):
+                    packages.append(item)
 
 if not os.path.isdir('dist'):
     os.mkdir('dist')
