@@ -30,7 +30,8 @@ for major in ['2', '3']:
         print('Couldn\'t find python' + major)
 
 if nonexistentmajorversions:
-    print('Environments with major version' + ('s' if len(nonexistentmajorversions) > 1 else '') + ' ' + ', '.join(nonexistentmajorversions) + ' will not be made')
+    print('Environments with major version' + ('s ' if len(nonexistentmajorversions) > 1 else ' ') + ', '.join(nonexistentmajorversions) + ' will not be made')
+
 
 def get_python_ver(python):
     if executable.startswith('python'):
@@ -59,17 +60,45 @@ longeststdlib = 0
 pythonsinstalled = []
 
 for (executable, major) in pythons:
-    if not major in nonexistentmajorversions:
+    if major not in nonexistentmajorversions:
         if subprocess.call(['which', executable], stdout=devnull, stderr=devnull) != 0:
             print('Couldn\'t find ' + executable + ', not making env')
         else:
             name, ver, stdlib = get_python_ver(executable)
             longestname = max(longestname, len(name))
             longestver = max(longestver, len(ver))
-            longeststdlib = max(longeststdlib, len(stdlib))
+            longeststdlib = max(longeststdlib, len(stdlib) if stdlib != ver else 0)
             pythonsinstalled.append((executable, major, name, ver, stdlib))
 
+python32envs = []
+
 for (executable, major, name, ver, stdlib) in pythonsinstalled:
-    print('Making ' + name + ' ' * (longestname + 1 - len(name)) + ver + ' ' * (longestver + 1 - len(ver)) + ' (stdlib ' + stdlib + ')' + ' ' * (longeststdlib + 1 - len(stdlib)) + 'env ... ', end='')
+    print('Making ' + name + ' ' * (longestname + 1 - len(name)) + ver + ((' ' * (longestver + 1 - len(ver)) + '(stdlib ' + stdlib + ')' + ' ' * (longeststdlib + 1 - len(stdlib))) if stdlib != ver else (' ' * (longestver - len(ver) + longeststdlib + (11 if longeststdlib != 0 else 1)))) + 'env ... ', end='')
     path = subprocess.check_output(['which', executable]).rstrip()
-    print('done' if subprocess.call(['python' + major, '-m', 'virtualenv', '-p', path, directory + '/envs/' + executable], stdout=devnull, stderr=devnull) == 0 else 'failed!')
+    is32 = stdlib.startswith('3.2')
+    if subprocess.call(['python' + major, '-m', 'virtualenv', '-p', path, directory + '/envs/' + executable] + (['--no-setuptools', '--no-pip', '--no-wheel'] if is32 else []), stdout=devnull, stderr=devnull) == 0:
+        print('done')
+        if is32:
+            python32envs.append((executable, major, name, ver, stdlib))
+    else:
+        print('failed!')
+        shutil.rmtree(directory + '/envs/' + executable)
+
+if python32envs:
+    longest32name = 0
+    longest32ver = 0
+    longest32stdlib = 0
+
+    for (executable, major, name, ver, stdlib) in python32envs:
+        longest32name = max(longest32name, len(name))
+        longest32ver = max(longest32ver, len(ver))
+        longest32stdlib = max(longest32stdlib, len(stdlib) if stdlib != ver else 0)
+
+    for (executable, major, name, ver, stdlib) in python32envs:
+        print('Packages for ' + name + ' ' * (longest32name + 1 - len(name)) + ver + ((' ' * (longest32ver + 1 - len(ver)) + '(stdlib ' + stdlib + ')' + ' ' * (longest32stdlib + 1 - len(stdlib))) if stdlib != ver else (' ' * (longest32ver - len(ver) + longest32stdlib + (11 if longest32stdlib != 0 else 1)))) + 'env ... ', end='')
+        execfile(directory + '/envs/' + executable + '/bin/activate_this.py', dict(__file__=directory + '/envs/' + executable + '/bin/activate_this.py'))
+        if subprocess.call(['python', directory + '/get-pip-32.py', 'setuptools<18.5', 'pip<8', 'wheel'], stdout=devnull, stderr=devnull) == 0:
+            print('done')
+        else:
+            print('failed!')
+            shutil.rmtree(directory + '/envs/' + executable)

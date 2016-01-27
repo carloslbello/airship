@@ -13,7 +13,7 @@ import subprocess32 as subprocess
 
 devnull = open(os.devnull, 'w')
 boolean = [[False, True]]
-numtimes = 5
+numtimes = int(sys.argv[2])
 item = sys.argv[1]
 
 def benchmark(command):

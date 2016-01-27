@@ -17,3 +17,4 @@ Thumbs.db
 test/*
 envs/*
 bench.csv
+get-pip-32.py

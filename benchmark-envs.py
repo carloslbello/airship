@@ -6,6 +6,7 @@ import itertools
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 devnull = open(os.devnull, 'w')
 force = []
+times = '5' if len(sys.argv) < 2 else sys.argv[1]
 # add specific versions to this array to only benchmark those versions
 
 boolean = [[False, True]]
@@ -36,4 +37,4 @@ if not subprocessisgood:
 
 for item in os.listdir('envs'):
     if os.path.isdir('envs/' + item) and (not force or item in force):
-        subprocess.call([sys.executable, 'benchmark.py', item])
+        subprocess.call([sys.executable, 'benchmark.py', item, times])
