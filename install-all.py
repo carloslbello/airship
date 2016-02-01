@@ -13,4 +13,5 @@ for item in os.listdir(directory):
     if item.startswith('airship') and os.path.isdir(item):
         packages.append('./' + item)
 
-subprocess.call(['pip', 'install', '-U', '--force-reinstall', '--no-index', '--no-deps'] + packages)
+subprocess.call(['pip', 'install', '-U', '--force-reinstall', '--no-index',
+                 '--no-deps'] + packages)

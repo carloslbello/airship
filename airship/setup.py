@@ -5,7 +5,11 @@ setup(
     version='1.5.3',
 
     description='A tool to synchronize game saves between clouds',
-    long_description='Airship allows users to synchronize saved games between cloud platforms. Requires subpackages for each cloud service; for example, install airship-steamcloud and airship-icloud to sync between these two services.',
+    long_description='Airship allows users to synchronize saved games ' +
+                     'between cloud platforms. Requires subpackages for ' +
+                     'each cloud service; for example, install ' +
+                     'airship-steamcloud and airship-icloud to sync between ' +
+                     'these two services.',
 
     url='https://github.com/aarzee/airship',
 
@@ -26,6 +30,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',

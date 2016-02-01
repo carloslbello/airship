@@ -15,6 +15,3 @@ Thumbs.db
 **.egg-info/
 *.pyc
 test/*
-envs/*
-bench.csv
-get-pip-32.py

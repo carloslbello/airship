@@ -25,6 +25,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
@@ -38,5 +39,7 @@ setup(
 
     install_requires=['airship']
 )
-#!@any=macosx_10_7_universal
-# ^ until a bug in pip is fixed (https://github.com/pypa/pip/issues/3202), this must not be used
+# !@any=macosx_10_7_universal
+# ^ pip 7.1.2, the last version to support Python 3.2, does not generate tags
+#   matching py2.py3-none-macosx_10_7_universal, so we can't use this
+#   https://github.com/pypa/pip/issues/3202

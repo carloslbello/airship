@@ -27,6 +27,9 @@ for package in packages:
         if item.endswith('.py'):
             shutil.copy(directory + '/' + package + '/airship/' + item, 'test')
     for binaryfolder in list(set(binaryfolders) & set(items)):
-        for item in os.listdir(os.getcwd() + '/' + package + '/airship/' + binaryfolder):
+        for item in os.listdir(os.getcwd() + '/' + package + '/airship/' +
+                               binaryfolder):
             if not item.startswith('.'):
-                shutil.copy(directory + '/' + package + '/airship/' + binaryfolder + '/' + item, directory + '/test/' + binaryfolder)
+                shutil.copy(directory + '/' + package + '/airship/' +
+                            binaryfolder + '/' + item,
+                            directory + '/test/' + binaryfolder)

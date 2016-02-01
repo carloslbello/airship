@@ -25,6 +25,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
@@ -37,9 +38,13 @@ setup(
     packages=['airship'],
 
     package_data={
-        'airship': ['bin_win32/steam_api.dll', 'bin_win32/CSteamworks.dll', 'bin_win64/steam_api64.dll', 'bin_win64/CSteamworks.dll', 'bin_osx/libsteam_api.dylib', 'bin_osx/CSteamworks.dylib', 'bin_lnx32/libsteam_api.so', 'bin_lnx32/libCSteamworks.so', 'bin_lnx64/libsteam_api.so', 'bin_lnx64/libCSteamworks.so']
+        'airship': ['bin_win32/steam_api.dll', 'bin_win32/CSteamworks.dll',
+                    'bin_win64/steam_api64.dll', 'bin_win64/CSteamworks.dll',
+                    'bin_osx/libsteam_api.dylib', 'bin_osx/CSteamworks.dylib',
+                    'bin_lnx32/libsteam_api.so', 'bin_lnx32/libCSteamworks.so',
+                    'bin_lnx64/libsteam_api.so', 'bin_lnx64/libCSteamworks.so']
     },
 
     install_requires=['airship']
 )
-#@macosx=macosx_10_6_intel
+# @macosx=macosx_10_6_intel
