@@ -5,7 +5,8 @@ try:
     from scandir import walk
 except ImportError:
     from os import walk
-    
+
+
 def init():
     global icloudfolder
     icloudfolder = ''
@@ -16,19 +17,25 @@ def init():
     else:
         return False
 
+
 def set_id(bundleid):
     global icloudbundleid
     icloudbundleid = bundleid
+
 
 def set_folder(folder):
     global icloudfolder
     icloudfolder = folder
 
+
 def will_work():
     global icloudpath
-    icloudpath = os.path.expanduser('~/Library/Mobile Documents/' + icloudbundleid + ('/' + icloudfolder if icloudfolder else ''))
+    icloudpath = os.path.expanduser('~/Library/Mobile Documents/' +
+                                    icloudbundleid + ('/' + icloudfolder if
+                                                      icloudfolder else ''))
 
     return os.path.isdir(icloudpath)
+
 
 def get_file_names():
     filenames = []
@@ -39,13 +46,16 @@ def get_file_names():
 
     return filenames
 
+
 def get_file_timestamp(filename):
     return int(os.path.getmtime(icloudpath + '/' + filename))
+
 
 def read_file(filename):
     with open(icloudpath + '/' + filename, 'rb') as fileobject:
         data = fileobject.read()
     return data
+
 
 def write_file(filename, data):
     path = icloudpath + '/' + filename
@@ -56,6 +66,7 @@ def write_file(filename, data):
 
     with open(path, 'wb') as fileobject:
         fileobject.write(data)
+
 
 def shutdown():
     global icloudfolder

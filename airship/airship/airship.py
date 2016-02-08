@@ -65,7 +65,7 @@ def bannersaga_transform_rgb_argb(orig):
     return bytes(result)
 
 
-def bannersaga_read(filename, timestamp, data, origin, regexes):
+def bannersaga_read_func():
     global imagemanip
     if imagemanip is None:
         try:
@@ -73,9 +73,8 @@ def bannersaga_read(filename, timestamp, data, origin, regexes):
             imagemanip = True
         except ImportError:
             imagemanip = False
-    return ((bannersaga_read_imagemanip
+    return (bannersaga_read_imagemanip
             if imagemanip else bannersaga_read_noimagemanip)
-            (filename, timestamp, data, origin, regexes))
 
 
 def bannersaga_read_imagemanip(filename, timestamp, data, origin, regexes):
@@ -207,7 +206,7 @@ def sync():
                 'id': 'MQ92743Y4D~com~stoicstudio~BannerSaga'
             }
         },
-        'read': bannersaga_read,
+        'read': bannersaga_read_func(),
         'compare': bannersaga_compare,
         'write': bannersaga_write
     }), gameobj({  # Transistor
@@ -401,12 +400,24 @@ def sync():
                                                     [filename][moduleindex])
                                             highesttimestampindex = moduleindex
                                     files[filename] = \
-                                            (filedata[filename]
-                                        [highesttimestampindex])
+                                        (filedata[filename]
+                                         [highesttimestampindex])
                                     for moduleindex in range(len(gamemodules)):
-                                        if moduleindex != highesttimestampindex and filetimestamps[filename][moduleindex] < highesttimestamp:
-                                            writeobject = game['write'](filename, files[filename], modulename(gamemodules[moduleindex].__name__), metadata, regexes)
-                                            gamemodules[moduleindex].write_file(writeobject[0], writeobject[1])
+                                        if (moduleindex !=
+                                            highesttimestampindex and
+                                            filetimestamps[filename]
+                                            [moduleindex] <
+                                                highesttimestamp):
+                                            writeobject = (game['write']
+                                                           (filename,
+                                                            files[filename],
+                                                            modulename(
+                                                                gamemodules
+                                                                [moduleindex]
+                                                                .__name__),
+                                                            metadata, regexes))
+                                            (gamemodules[moduleindex]
+                                                .write_file(*writeobject))
                         game['after'](files, modules, metadata)
                 for module in gamemodules:
                     module.shutdown()
