@@ -27,6 +27,12 @@ def modulename(name):
         name = name[dotindex + 1:]
     return name
 
+# datetime.datetime to 6-tuple
+
+
+def datetimetuple(dt):
+    return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+
 # Data manipulation functions
 
 # Identity
@@ -36,12 +42,8 @@ def identity_read(filename, timestamp, data, origin, regexes):
     return ([(filename, timestamp, data)], {})
 
 
-def identity_compare(filename, data1, data2):
-    return data1 == data2
-
-
 def identity_write(filename, data, destination, meta, regexes):
-    return (filename, data)
+    return (True, (filename, data))
 
 
 def noop_after(filedata, modules, metadata):
@@ -79,16 +81,20 @@ def bannersaga_read_func():
 
 def bannersaga_read_imagemanip(filename, timestamp, data, origin, regexes):
     import PIL.Image
+    import struct
     if origin == 'steamcloud' and filename.endswith('png'):
         import io
         filename = filename[:-3] + 'img'
-        data = PIL.Image.open(io.BytesIO(data))
+        image = PIL.Image.open(io.BytesIO(data)).convert(mode='RGB')
+        data = struct.pack('HH', image.width, image.height) + image.tobytes()
     if origin == 'icloud' and filename.endswith('bmpzip'):
         import zlib
         filename = filename[:-6] + 'img'
-        data = PIL.Image.frombytes('RGB', (480, 360),
-                                   bannersaga_transform_argb_rgb(
+        data = (struct.pack('HH', 480, 360) +
+                PIL.Image.frombytes('RGB', (480, 360),
+                                    bannersaga_transform_argb_rgb(
                                         zlib.decompress(bytes(data))))
+                         .tobytes())
     return ([(filename, timestamp, data)], {})
 
 
@@ -97,26 +103,28 @@ def bannersaga_read_noimagemanip(filename, timestamp, data, origin, regexes):
             else [(filename, timestamp, data)], {})
 
 
-def bannersaga_compare(filename, data1, data2):
-    if filename.endswith('img'):
-        return data1.tobytes() == data2.tobytes()
-    return data1 == data2
-
-
 def bannersaga_write(filename, data, destination, meta, regexes):
     if filename.endswith('img'):
+        import struct
         if destination == 'steamcloud':
+            import PIL.Image
             import io
             filename = filename[:-3] + 'png'
             pngbytes = io.BytesIO()
-            data.save(pngbytes, 'png', optimize=True)
+            (PIL.Image.frombytes('RGB',
+                                 struct.unpack('HH',
+                                               data[:struct.calcsize('HH')],
+                                               data[struct.calcsize('HH'):]))
+                      .save(pngbytes, 'png', optimize=True))
             data = pngbytes.getvalue()
         if destination == 'icloud':
             import zlib
             filename = filename[:-3] + 'bmpzip'
-            data = zlib.compress(bannersaga_transform_rgb_argb(data.tobytes()),
-                                 9)
-    return (filename, data)
+            data = zlib.compress(
+                       bannersaga_transform_rgb_argb(data
+                                                     [struct.calcsize('HH'):]),
+                       9)
+    return (True, (filename, data))
 
 # Transistor
 
@@ -128,7 +136,7 @@ def transistor_read(filename, timestamp, data, origin, regexes):
 def transistor_write(filename, data, destination, meta, regexes):
     if destination == 'icloud':
         filename = filename[0].upper() + filename[1:]
-    return (filename, data)
+    return (True, (filename, data))
 
 # Costume Quest
 
@@ -158,7 +166,7 @@ def costumequest_write(filename, data, destination, meta, regexes):
                                     (b'0' if filename not in meta else
                                      meta[filename]) +
                                     data[semicolonafterplacementsindex:])
-    return (filename, data)
+    return (True, (filename, data))
 
 # Race the Sun
 
@@ -168,8 +176,8 @@ def racethesun_read(filename, timestamp, data, origin, regexes):
 
 
 def racethesun_write(filename, data, destination, meta, regexes):
-    return ('rts_save.xml' if destination == 'icloud'
-            else 'savegame.xml', data)
+    return (True, ('rts_save.xml' if destination == 'icloud'
+            else 'savegame.xml', data))
 
 # gameobj()
 
@@ -177,8 +185,6 @@ def racethesun_write(filename, data, destination, meta, regexes):
 def gameobj(obj):
     if 'read' not in obj:
         obj['read'] = identity_read
-    if 'compare' not in obj:
-        obj['compare'] = identity_compare
     if 'write' not in obj:
         obj['write'] = identity_write
     if 'after' not in obj:
@@ -194,8 +200,8 @@ def sync():
             'base': (r'^[0-4]/(resume|sav_(chapter[1235]|(leaving)?(einartof' +
                      r't|frostvellr)|(dengl|dund|hridvaldy|radormy|skog)r|bj' +
                      r'orulf|boersgard|finale|grofheim|hadeborg|ingrid|marek' +
-                     r'|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|sa' +
-                     r've\.json)$')
+                     r'|ridgehorn|sigrholm|stravhs|wyrmtoe))\.(bmpzip|png|im' +
+                     r'g|save\.json)$')
         },
         'folder': 'save/saga1',
         'modules': {
@@ -207,7 +213,6 @@ def sync():
             }
         },
         'read': bannersaga_read_func(),
-        'compare': bannersaga_compare,
         'write': bannersaga_write
     }), gameobj({  # Transistor
         'regexformats': {
@@ -313,7 +318,8 @@ def sync():
                         else:
                             regexes[regex] = re.compile(game['regexformats']
                                                             [regex])
-                    for moduleindex in range(len(gamemodules)):
+                    moduleindex = 0
+                    while cancontinue and moduleindex < len(gamemodules):
                         cancontinue = False
                         for filename in (gamemodules[moduleindex]
                                          .get_file_names()):
@@ -330,17 +336,19 @@ def sync():
                                 metadata.update(readobject[1])
                                 for (itemfilename, itemfiletimestamp,
                                         itemfiledata) in readobject[0]:
-                                    if itemfilename not in filetimestamps:
-                                        filetimestamps[itemfilename] = \
-                                            [-1] * len(gamemodules)
-                                    (filetimestamps[itemfilename]
-                                        [moduleindex]) = itemfiletimestamp
-                                    if itemfilename not in filedata:
-                                        filedata[itemfilename] = \
-                                            [-1] * len(gamemodules)
-                                    filedata[itemfilename][moduleindex] = \
-                                        itemfiledata
-                                cancontinue = True
+                                    if fileregex.match(itemfilename):
+                                        if itemfilename not in filetimestamps:
+                                            filetimestamps[itemfilename] = \
+                                                [-1] * len(gamemodules)
+                                        (filetimestamps[itemfilename]
+                                            [moduleindex]) = itemfiletimestamp
+                                        if itemfilename not in filedata:
+                                            filedata[itemfilename] = \
+                                                [b''] * len(gamemodules)
+                                        filedata[itemfilename][moduleindex] = \
+                                            itemfiledata
+                                        cancontinue = True
+                        moduleindex += 1
                     if cancontinue:
                         for filename in filetimestamps:
                             for timestamp in filetimestamps[filename]:
@@ -379,12 +387,11 @@ def sync():
                                                     lowesttimestampindex and
                                                     filetimestamps[filename]
                                                         [moduleindex] > 0 and
-                                                    game['compare']
-                                                    (filename,
-                                                     filedata[filename]
-                                                        [lowesttimestampindex],
-                                                     filedata[filename]
-                                                        [moduleindex])):
+                                                    filedata[filename]
+                                                        [lowesttimestampindex]
+                                                        ==
+                                                    filedata[filename]
+                                                        [moduleindex]):
                                                     (filetimestamps[filename]
                                                         [moduleindex]) = \
                                                         lowesttimestamp
@@ -401,7 +408,8 @@ def sync():
                                             highesttimestampindex = moduleindex
                                     files[filename] = \
                                         (filedata[filename]
-                                         [highesttimestampindex])
+                                         [highesttimestampindex],
+                                         highesttimestamp)
                                     for moduleindex in range(len(gamemodules)):
                                         if (moduleindex !=
                                             highesttimestampindex and
@@ -410,14 +418,16 @@ def sync():
                                                 highesttimestamp):
                                             writeobject = (game['write']
                                                            (filename,
-                                                            files[filename],
+                                                            files[filename][0],
                                                             modulename(
                                                                 gamemodules
                                                                 [moduleindex]
                                                                 .__name__),
                                                             metadata, regexes))
-                                            (gamemodules[moduleindex]
-                                                .write_file(*writeobject))
-                        game['after'](files, modules, metadata)
+                                            if writeobject[0]:
+                                                (gamemodules[moduleindex]
+                                                    .write_file(
+                                                        *writeobject[1]))
+                        game['after'](files, workingmodules, metadata)
                 for module in gamemodules:
                     module.shutdown()
