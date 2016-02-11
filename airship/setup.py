@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship',
-    version='1.5.4',
+    version='1.5.5',
 
     description='A tool to synchronize game saves between clouds',
     long_description='Airship allows users to synchronize saved games ' +

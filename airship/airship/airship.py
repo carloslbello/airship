@@ -53,10 +53,8 @@ def noop_after(filedata, modules, metadata):
 
 
 def bannersaga_transform_argb_rgb(orig):
-    result = bytearray()
-    orig = orig[13:]
-    for i in range(0, len(orig), 4):
-        result += orig[i + 1:i + 4]
+    result = bytearray(orig[13:])
+    del result[::4]
     return bytes(result)
 
 

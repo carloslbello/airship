@@ -1,5 +1,5 @@
 # Airship
-[![PyPI version](https://badge.fury.io/py/airship.svg)](http://badge.fury.io/py/airship) [![Build Status](https://travis-ci.org/aarzee/airship.svg?branch=master)](https://travis-ci.org/aarzee/airship)
+[![PyPI version](https://badge.fury.io/py/airship.svg)](https://badge.fury.io/py/airship) [![Build Status](https://travis-ci.org/aarzee/airship.svg?branch=master)](https://travis-ci.org/aarzee/airship)
 
 Airship is a Python-based program to synchronize game saves between clouds, such as iCloud (for iOS) and Steam Cloud (for Steam).
 
@@ -23,7 +23,8 @@ For instructions on how to run Airship on a schedule, see the wiki page [Automat
 Airship will not synchronize a game if a cloud service is functioning, but has no files for the game. (This does not include clouds which are not active, or do not support the game). This is to prevent data loss in the event that a cloud service is somehow unavailable or otherwise does not have a local copy of the files. Before using Airship, please create a save file on all clouds you intend to use, and make sure the one that you want synchronized is the one last opened.
 
 ## Supported games
-+ The Banner Saga ([Steam Cloud](http://store.steampowered.com/app/237990/), [iCloud](https://itunes.apple.com/us/app/banner-saga/id911006986))
-+ Transistor ([Steam Cloud](http://store.steampowered.com/app/237930/), [iCloud](https://itunes.apple.com/us/app/transistor/id948857526))
-+ Costume Quest ([Steam Cloud](http://store.steampowered.com/app/115100/), [iCloud](https://itunes.apple.com/us/app/costume-quest/id632297587))
-+ Race the Sun ([Steam Cloud](http://store.steampowered.com/app/253030/), [iCloud](https://itunes.apple.com/us/app/race-the-sun/id700227648))
++ The Banner Saga ([Steam Cloud](https://store.steampowered.com/app/237990/), [iCloud](https://itunes.apple.com/us/app/banner-saga/id911006986))
++ Transistor ([Steam Cloud](https://store.steampowered.com/app/237930/), [iCloud](https://itunes.apple.com/us/app/transistor/id948857526))
++ Costume Quest ([Steam Cloud](https://store.steampowered.com/app/115100/), [iCloud](https://itunes.apple.com/us/app/costume-quest/id632297587))
++ Race the Sun ([Steam Cloud](https://store.steampowered.com/app/253030/), [iCloud](https://itunes.apple.com/us/app/race-the-sun/id700227648))
++ Don't Starve ([Steam Cloud](https://store.steampowered.com/app/219740/), [iCloud](https://itunes.apple.com/us/app/dont-starve-pocket-edition/id1012298403)) *(note: [Reign of Giants DLC](https://store.steampowered.com/app/282470/) must be owned on Steam)*
