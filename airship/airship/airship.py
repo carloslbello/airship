@@ -1,8 +1,11 @@
 import re
 
-# Defined as a boolean if a function that can use it is run
+try:
+    import PIL.Image
+    imagemanip = True
+except ImportError:
+    imagemanip = False
 
-imagemanip = None
 
 modules = []
 
@@ -65,18 +68,6 @@ def bannersaga_transform_rgb_argb(orig):
     return bytes(result)
 
 
-def bannersaga_read_func():
-    global imagemanip
-    if imagemanip is None:
-        try:
-            import PIL.Image
-            imagemanip = True
-        except ImportError:
-            imagemanip = False
-    return (bannersaga_read_imagemanip
-            if imagemanip else bannersaga_read_noimagemanip)
-
-
 def bannersaga_read_imagemanip(filename, timestamp, data, origin, regexes):
     import PIL.Image
     import struct
@@ -84,12 +75,11 @@ def bannersaga_read_imagemanip(filename, timestamp, data, origin, regexes):
         import io
         filename = filename[:-3] + 'img'
         image = PIL.Image.open(io.BytesIO(data)).convert(mode='RGB')
-        data = struct.pack('HH', image.width, image.height) + image.tobytes()
+        data = image.tobytes()
     if origin == 'icloud' and filename.endswith('bmpzip'):
         import zlib
         filename = filename[:-6] + 'img'
-        data = (struct.pack('HH', 480, 360) +
-                PIL.Image.frombytes('RGB', (480, 360),
+        data = (PIL.Image.frombytes('RGB', (480, 360),
                                     bannersaga_transform_argb_rgb(
                                         zlib.decompress(bytes(data))))
                          .tobytes())
@@ -101,27 +91,24 @@ def bannersaga_read_noimagemanip(filename, timestamp, data, origin, regexes):
             else [(filename, timestamp, data)], {})
 
 
+bannersaga_read = (bannersaga_read_imagemanip
+                   if imagemanip else bannersaga_read_noimagemanip)
+
+
 def bannersaga_write(filename, data, destination, meta, regexes):
     if filename.endswith('img'):
-        import struct
         if destination == 'steamcloud':
             import PIL.Image
             import io
             filename = filename[:-3] + 'png'
             pngbytes = io.BytesIO()
-            (PIL.Image.frombytes('RGB',
-                                 struct.unpack('HH',
-                                               data[:struct.calcsize('HH')],
-                                               data[struct.calcsize('HH'):]))
-                      .save(pngbytes, 'png', optimize=True))
+            (PIL.Image.frombytes('RGB', (480, 360), data)
+                      .save(pngbytes, 'png'))
             data = pngbytes.getvalue()
         if destination == 'icloud':
             import zlib
             filename = filename[:-3] + 'bmpzip'
-            data = zlib.compress(
-                       bannersaga_transform_rgb_argb(data
-                                                     [struct.calcsize('HH'):]),
-                       9)
+            data = zlib.compress(bannersaga_transform_rgb_argb(data), 9)
     return (True, (filename, data))
 
 # Transistor
@@ -210,7 +197,7 @@ def sync():
                 'id': 'MQ92743Y4D~com~stoicstudio~BannerSaga'
             }
         },
-        'read': bannersaga_read_func(),
+        'read': bannersaga_read,
         'write': bannersaga_write
     }), gameobj({  # Transistor
         'regexformats': {
@@ -230,8 +217,8 @@ def sync():
     }), gameobj({  # Costume Quest
         'regexformats': {
             'base': r'^CQ(_DLC)?_save_[012]$',
-            'timeplayed': r'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$',
-            'level': r'worlds\/([a-z_]+)\/\1'
+            'timeplayed': b'^.+(;TimePlayed=([1-9]*[0-9](\.[0-9]+)?)).*$',
+            'level': b'worlds\/([a-z_]+)\/\1'
         },
         'modules': {
             'steamcloud': {

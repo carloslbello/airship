@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='airship-icloud',
-    version='1.5.1',
+    version='1.5.6',
 
     description='iCloud plugin for Airship',
 

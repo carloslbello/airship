@@ -68,6 +68,10 @@ def write_file(filename, data):
         fileobject.write(data)
 
 
+def delete_file(filename):
+    os.unlink(icloudpath + '/' + filename)
+
+
 def shutdown():
     global icloudfolder
     icloudfolder = ''

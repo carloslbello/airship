@@ -47,6 +47,9 @@ def init():
         steamapi_file_read = steamapi.ISteamRemoteStorage_FileRead
         steamapi_file_read.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
                                        ctypes.c_int]
+        global steamapi_file_delete
+        steamapi_file_delete = steamapi.ISteamRemoteStorage_FileDelete
+        steamapi_file_delete.argtypes = [ctypes.c_char_p]
         global steamapi_shutdown
         steamapi_shutdown = steamapi.Shutdown
         global steamapi_cloud_enabled_account
@@ -116,6 +119,10 @@ def write_file(filename, data):
     stringbuffer = ctypes.create_string_buffer(data)
     steamapi_file_write(((steamfolder + '/' if steamfolder else '') + filename)
                         .encode('utf-8'), stringbuffer, size)
+
+
+def delete_file(filename):
+    steamapi_file_delete((steamfolder + '/' if steamfolder else '') + filename)
 
 
 def shutdown():
